@@ -109,7 +109,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 // Publishable key is safe in the browser. NEVER put a service-role/secret key here.
 const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 // Free TMDB API key (themoviedb.org → Settings → API). Leave "" to keep the generated posters.
-const TMDB_KEY="";
+const TMDB_KEY="bbc8e71cb7878611b0891b98d3997917";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
