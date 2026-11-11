@@ -44,6 +44,10 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .circ{display:none;position:absolute;top:8px;left:8px;z-index:2;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#0008}.selmode .circ{display:block}.pick .circ{background:var(--red);border-color:var(--red);box-shadow:inset 0 0 0 3px #0009}.pick{border-color:var(--red)}
 .pr{margin:9px 0;font-size:12px}.pr>div:first-child{display:flex;justify-content:space-between}.pr b{color:var(--gold);font-weight:700}.pr .track{margin-top:5px;height:4px}.prog h4{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .stars{display:flex;gap:2px;margin:14px 0 4px}.st{font-size:26px;line-height:1;cursor:pointer;background:linear-gradient(90deg,var(--gold) var(--f),#3a3a43 var(--f));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.has{background-size:cover;background-position:center top}.has i,.has b,.has em,.has:before{display:none}
+.play{width:100%;margin-top:8px;border:0;background:var(--red);color:#fff;font-weight:800;padding:10px;border-radius:9px}
+.pl{position:fixed;inset:0;background:#000e;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}.plbox{width:min(1000px,100%)}.plbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.plv{aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;place-items:center;color:var(--muted);text-align:center;padding:14px}.plv iframe{width:100%;height:100%;border:0}
 .note{resize:vertical;font-size:13px;margin:8px 0 0}.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1a20;border:1px solid #4a4a54;border-radius:14px;padding:10px 14px;box-shadow:0 10px 40px #000c}
 .empty{color:var(--muted);text-align:center;padding:35px;border:1px dashed var(--line);border-radius:14px}
 #right{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:12px}aside,.prog{border:1px solid #383840;background:#15151a;border-radius:16px;padding:16px}
@@ -56,7 +60,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .check.done{border-color:#245b43;background:#13291f;color:#9be4ba}
 .x{float:right;background:none;border:0;color:var(--muted);font-size:20px;line-height:1}
 @media(max-width:900px){.dash{grid-template-columns:1fr}.layout{grid-template-columns:minmax(0,1fr)}#right{position:static;max-height:none;overflow:visible;order:-1}
- aside{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:68vh;border-radius:18px 18px 0 0;z-index:20;box-shadow:0 -20px 60px #000c}}
+ aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);max-height:84vh;overflow:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}}
 @media(max-width:560px){.grid{grid-template-columns:repeat(3,1fr);gap:9px}.poster b{font-size:11px}}
 </style>
 </head>
@@ -88,11 +92,14 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
   <select id="fStudio"><option value="">All studios</option></select>
   <select id="fFr"><option value="">All franchises</option></select>
   <select id="fPath"><option value="">All pathways</option></select>
+  <select id="fKind"><option value="">All types</option><option value="movie">Movies</option><option value="series">Series</option><option value="ss">Shorts &amp; specials</option><option value="assembled">Assembled</option></select>
   <select id="fStat"><option value="">All</option><option value="u">To watch</option><option value="w">Watched</option></select>
   <select id="sort"><option value="r">Release order</option><option value="t">MCU timeline order</option><option value="a">A–Z</option></select>
   <button class="pill" id="selmode">Select</button>
  </div>
  <div class="layout" id="layout"><div id="list"></div><div id="right"><div class="prog" id="prog"></div><aside id="side" hidden></aside></div></div>
+ <p class="muted" style="margin-top:28px;font-size:11px">Posters and IDs: this product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+ <div class="pl" id="pl" hidden><div class="plbox"><div class="plbar"><button class="secondary" id="plx">← Back to details</button><span class="muted" id="plt"></span></div><div class="plv" id="plv"></div></div></div>
  <div class="bulk" id="bulk" hidden><span id="bn"></span><button class="primary" id="bw" style="width:auto">Mark watched</button><button class="secondary" id="bu" style="border-radius:9px">Mark unwatched</button><button class="secondary" id="bc" style="border-radius:9px">Clear</button></div>
 </main>
 </div>
@@ -101,26 +108,30 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 <script>
 // Publishable key is safe in the browser. NEVER put a service-role/secret key here.
 const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+// Free TMDB API key (themoviedb.org → Settings → API). Leave "" to keep the generated posters.
+const TMDB_KEY="";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Other studios"];
-let user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
+let settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v1")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
   sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user?.id!==user?.id) location.reload(); });
   if(!session){ $("login").hidden=false; return; }
   user=session.user; $("who").hidden=false;
-  const [p,m,pw,w,nt]=await Promise.all([
+  const [p,m,pw,w,nt,st]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
-    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,synopsis,studios(name),movie_franchises(franchises(name))").eq("is_theatrical",true),
+    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,synopsis,studios(name),movie_franchises(franchises(name))"),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
-    sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id)]);
+    sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
+    sb.from("app_settings").select("key,value")]);
   name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
   movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:x.movie_franchises.map(f=>f.franchises.name)}));
-  paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
+  (st.data||[]).forEach(r=>settings[r.key]=r.value); paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
   fill("fStudio",[...new Set(movies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
   fill("fFr",[...new Set(movies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
   fill("fPath",paths.map(p=>[p.slug,p.name]));
@@ -136,8 +147,42 @@ const rkey=m=>m.release_date||`${m.release_year}-07-01`;
 const group=m=>m.phase||(["20th Century Fox","Sony Pictures"].includes(m.studio)?m.studio:"Other studios");
 const fmt=d=>d?new Date(d).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"}):"";
 
-function thumb(m,big){const s=m.studio==="Marvel Studios"?"MARVEL STUDIOS":m.studio.toUpperCase();
-  return `<div class="poster" style="--c1:${hue(m.title)}"><i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em></div>`;}
+function thumb(m,big){const s=(m.studio==="Marvel Studios"?"MARVEL STUDIOS":m.studio.toUpperCase())+(m.kind&&m.kind!=="movie"?" · "+KIND[m.kind].toUpperCase():"");
+  const p=(tm[m.id]||{}).p, bg=p?`;background-image:url(https://image.tmdb.org/t/p/${big?"w342":"w185"}${p})`:"";
+  return `<div class="poster ${p?"has":""}" style="--c1:${hue(m.title)}${bg}"><i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em></div>`;}
+async function tmdb(m){
+  if(tm[m.id]) return tm[m.id]; if(!TMDB_KEY) return null;
+  const tv=m.kind==="series", q=encodeURIComponent(m.title.replace(/^Marvel One-Shot: |^Marvel Studios: Assembled – /,""));
+  try{const r=await (await fetch(`https://api.themoviedb.org/3/search/${tv?"tv":"movie"}?api_key=${TMDB_KEY}&query=${q}&${tv?"first_air_date_year":"primary_release_year"}=${m.release_year}`)).json();
+    const x=r.results&&r.results[0]; tm[m.id]=x?{id:x.id,p:x.poster_path}:{id:null,p:null};
+    localStorage.setItem("frame_tmdb_v1",JSON.stringify(tm)); return tm[m.id];}catch{return null;}
+}
+const io="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(en=>{
+  if(!en.isIntersecting) return; io.unobserve(en.target);
+  const m=movies.find(x=>x.id==en.target.dataset.open);
+  if(m&&!tm[m.id]) tmdb(m).then(r=>{ if(r&&r.p){const el=en.target.querySelector(".poster"); el.classList.add("has"); el.style.backgroundImage=`url(https://image.tmdb.org/t/p/w185${r.p})`;} });
+}),{rootMargin:"200px"}):null;
+// ---- player: the link comes from the player_template setting in the database ----
+function embedUrl(imdb){const t=settings.player_template||"";
+  if(!t.includes("{imdb_id}")||!/^tt\d{7,10}$/.test(imdb||"")) return null;
+  try{const u=new URL(t.replace("{imdb_id}",imdb)); return u.protocol==="https:"?u.href:null;}catch{return null;}}
+async function imdbOf(m){
+  if(m.imdb_id) return m.imdb_id;
+  const r=await tmdb(m); if(!r||!r.id) return null; if(r.imdb) return r.imdb;
+  try{const j=await (await fetch(`https://api.themoviedb.org/3/movie/${r.id}/external_ids?api_key=${TMDB_KEY}`)).json();
+    r.imdb=j.imdb_id||null; localStorage.setItem("frame_tmdb_v1",JSON.stringify(tm)); return r.imdb;}catch{return null;}}
+async function play(id){
+  const m=movies.find(x=>x.id===id); if(!m) return;
+  $("plt").textContent=m.title; $("pl").hidden=false; $("plv").textContent="Loading…";
+  const imdb=await imdbOf(m);
+  if(!imdb){$("plv").textContent="No IMDb ID for this title yet, so it can’t be played.";return;}
+  const url=embedUrl(imdb);
+  if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
+  const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
+  f.setAttribute("allow","fullscreen; encrypted-media"); f.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
+  f.onerror=()=>{$("plv").textContent="This source couldn’t be loaded.";};
+  $("plv").textContent=""; $("plv").appendChild(f);
+}
 
 function render(){
   const total=movies.length,done=movies.filter(m=>watched.has(m.id)).length,pct=total?Math.round(done/total*100):0;
@@ -149,10 +194,10 @@ function render(){
   const nx=pm.find(m=>!watched.has(m.id))||movies.find(m=>!watched.has(m.id));
   $("next").textContent=nx?`Up next: ${nx.title} (${nx.release_year})`:"You’ve watched everything in the library.";
 
-  const q=$("q").value.toLowerCase(),st=$("fStudio").value,fr=$("fFr").value,pa=$("fPath").value,sw=$("fStat").value,so=$("sort").value;
+  const q=$("q").value.toLowerCase(),kf=$("fKind").value,st=$("fStudio").value,fr=$("fFr").value,pa=$("fPath").value,sw=$("fStat").value,so=$("sort").value;
   const pset=pa?new Set(pathMovies(pa)):null;
   const list=movies.filter(m=>(!q||m.title.toLowerCase().includes(q)||String(m.release_year).includes(q))
-    &&(!st||m.studio===st)&&(!fr||m.frs.includes(fr))&&(!pset||pset.has(m.id))&&(!sw||(sw==="w")===watched.has(m.id)));
+    &&(!kf||(kf==="ss"?["short","special"].includes(m.kind):m.kind===kf))&&(!st||m.studio===st)&&(!fr||m.frs.includes(fr))&&(!pset||pset.has(m.id))&&(!sw||(sw==="w")===watched.has(m.id)));
   const cmp=so==="a"?(a,b)=>a.title.localeCompare(b.title):so==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
   list.sort(cmp);
   const G={}; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
@@ -162,6 +207,7 @@ function render(){
    ||'<div class="empty">No movies match.</div>';
   renderSide(); renderProg();
   $("layout").classList.toggle("selmode",selMode); $("selmode").textContent=selMode?"Done selecting":"Select";
+  if(TMDB_KEY&&io) document.querySelectorAll(".card").forEach(c=>{ if(!tm[c.dataset.open]) io.observe(c); });
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
 function renderProg(){
@@ -190,6 +236,7 @@ function renderSide(){
   const d=watched.has(m.id), ps=paths.map(p=>{const x=p.pathway_movies.find(x=>x.movie_id===m.id);return x?`${p.name} · ${x.viewing_type}`:null}).filter(Boolean);
   side.innerHTML=`<button class="x" data-close="1" aria-label="Close">×</button>${thumb(m,1)}
    <h3>${esc(m.title)}</h3>
+   <div class="row">Type: <span>${esc(KIND[m.kind]||"Movie")}</span></div>
    <div class="row">Released: <span>${esc(fmt(m.release_date)||m.release_year)}</span></div>
    ${m.world_year?`<div class="row">Story year: <span>${esc(m.world_year)}</span></div>`:""}
    <div class="row">Studio: <span>${esc(m.studio||"—")}</span></div>
@@ -197,6 +244,7 @@ function renderSide(){
    <div class="chips">${m.frs.map(f=>`<span class="chip">${esc(f)}</span>`).join("")}${ps.map(p=>`<span class="chip g">${esc(p)}</span>`).join("")}</div>
    <p class="syn">${m.synopsis?esc(m.synopsis):"Synopsis coming soon."}</p>
    <button class="check ${d?"done":""}" data-id="${m.id}">${d?"✓ Watched (tap to undo)":"Mark as watched"}</button>
+   ${m.kind==="movie"&&embedUrl("tt0000000")?`<button class="play" data-play="${m.id}">▶ Play</button>`:""}
    <div class="stars">${[1,2,3,4,5].map(i=>{const r=(notes[m.id]||{}).rating||0;return `<b class="st" data-star="${i}" style="--f:${r>=i?100:r>=i-.5?50:0}%">★</b>`}).join("")}</div>
    <div class="row">${(notes[m.id]||{}).rating?(notes[m.id].rating+" / 5 · tap the same star to clear"):"Not rated · tap a star (left half = half star)"}</div>
    <textarea class="field note" data-note="${m.id}" rows="4" placeholder="Your private notes…">${esc((notes[m.id]||{}).notes||"")}</textarea>`;
@@ -209,6 +257,7 @@ document.addEventListener("click",async e=>{
                :await sb.from("watch_progress").upsert({user_id:user.id,movie_id:id});
     if(r.error){ was?watched.add(id):watched.delete(id); render(); alert("Couldn’t save: "+r.error.message); }
     return; }
+  const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
   const star=e.target.closest("[data-star]");
   if(star&&sel){ const rc=star.getBoundingClientRect(), i=+star.dataset.star, r=i-((e.clientX-rc.left)<rc.width/2?.5:0);
     const cur=(notes[sel]||{}).rating; saveNote(sel,{rating:cur===r?null:r}); render(); return; }
@@ -216,8 +265,9 @@ document.addEventListener("click",async e=>{
   const c=e.target.closest("[data-open]");
   if(c){ const id=+c.dataset.open; if(selMode){ picked.has(id)?picked.delete(id):picked.add(id); } else sel=sel===id?null:id; render(); }
 });
-["q","fStudio","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
+["q","fKind","fStudio","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
 document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{$("fPath").value=p.dataset.path;render();$("list").scrollIntoView({behavior:"smooth"});});
+$("plx").onclick=()=>{$("pl").hidden=true;$("plv").textContent="";};
 $("selmode").onclick=()=>{selMode=!selMode;if(!selMode)picked.clear();render();};
 $("bw").onclick=()=>bulk(true);$("bu").onclick=()=>bulk(false);$("bc").onclick=()=>{picked.clear();render();};
 document.addEventListener("change",e=>{const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
