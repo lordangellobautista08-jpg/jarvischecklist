@@ -59,15 +59,17 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 </head>
 <body>
 <div class="wrap">
-<header><div class="brand">FRAME <b>/</b> MARVEL ARCHIVE</div><div id="who" hidden><button class="pill" id="out">Sign out</button></div></header>
+<header><div class="brand">FRAME <b>/</b> MARVEL ARCHIVE</div><div id="who" hidden><button class="pill" id="pwbtn">Set password</button> <button class="pill" id="out">Sign out</button></div></header>
 
 <section id="login" class="login" hidden>
  <div class="eyebrow">Sign in</div><h1 style="font-size:30px">Your Marvel archive.</h1>
- <p class="muted">Enter your email and we’ll send a magic link. No password needed.</p>
+ <p class="muted">Enter your email and password. New here? Use the same form and we’ll create your account.</p>
  <label for="email">EMAIL</label><input class="field" id="email" type="email" autocomplete="email">
- <label for="dname">DISPLAY NAME (first sign-in)</label><input class="field" id="dname" maxlength="24" placeholder="e.g. Iyo">
- <button class="primary" id="send">Send magic link</button>
- <button class="secondary" id="guest" style="width:100%;margin-top:10px;border-radius:9px">Preview as guest (no email)</button><p class="muted" id="msg"></p>
+ <label for="pw">PASSWORD (6+ characters)</label><input class="field" id="pw" type="password" autocomplete="current-password">
+ <label for="dname">DISPLAY NAME (new accounts only)</label><input class="field" id="dname" maxlength="24" placeholder="e.g. Iyo">
+ <button class="primary" id="go">Continue</button>
+ <button class="secondary" id="send" style="width:100%;margin-top:10px;border-radius:9px">Forgot password? Email me a sign-in link</button>
+ <p class="muted" id="msg"></p>
 </section>
 
 <main id="app" hidden>
@@ -93,7 +95,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 // Publishable key is safe in the browser. NEVER put a service-role/secret key here.
-const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O");
+const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
@@ -188,9 +190,26 @@ $("send").onclick=async()=>{
   const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,data:{display_name:$("dname").value.trim()}}});
   $("msg").textContent=error?error.message:"Check your email for the sign-in link.";
 };
-$("guest").onclick=async()=>{
-  const {error}=await sb.auth.signInAnonymously({options:{data:{display_name:"Guest"}}});
-  $("msg").textContent=error?error.message:"";
+$("go").onclick=async()=>{
+  const email=$("email").value.trim(),password=$("pw").value,dn=$("dname").value.trim(),msg=$("msg");
+  if(!email||!password){msg.textContent="Enter your email and password.";return;}
+  if(password.length<6){msg.textContent="Password needs at least 6 characters.";return;}
+  msg.textContent="Checking…";
+  let r=await sb.auth.signInWithPassword({email,password});
+  if(!r.error) return;                                   // signed in: the page reloads by itself
+  if(!/invalid login credentials/i.test(r.error.message)){msg.textContent=r.error.message;return;}
+  r=await sb.auth.signUp({email,password,options:{data:{display_name:dn}}});   // no account yet? create one
+  const exists=(r.error&&/already registered/i.test(r.error.message))||(r.data?.user&&r.data.user.identities?.length===0);
+  if(exists){msg.textContent="This email already has an account, but that password doesn’t match. Try again, or use the email link below, then tap “Set password”.";return;}
+  if(r.error){msg.textContent=r.error.message;return;}
+  if(!r.data.session) msg.textContent="Account created. Check your email to confirm it, then come back and sign in.";
+};
+$("pw").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click();});
+$("pwbtn").onclick=async()=>{
+  const p=prompt("New password (6+ characters):"); if(!p) return;
+  if(p.length<6){alert("Needs at least 6 characters.");return;}
+  const {error}=await sb.auth.updateUser({password:p});
+  alert(error?error.message:"Password saved. Next time, sign in with your email and password.");
 };
 init();
 </script>
