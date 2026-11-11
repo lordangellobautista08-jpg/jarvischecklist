@@ -116,7 +116,9 @@ async function init(){
   fill("fStudio",[...new Set(movies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
   fill("fFr",[...new Set(movies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
   fill("fPath",paths.map(p=>[p.slug,p.name]));
-  $("greet").textContent=`Welcome back, ${name}. Ready for your next Marvel movie?`;
+  const nn=name.toLowerCase().replace(/[^a-z]/g,"");
+  const special=/^(jai|jay|jaiane|jayane|jayan|jaian|yang|buyang)+$/.test(nn);   // add more name pieces here
+  $("greet").textContent=`Welcome back, ${name}. Ready for your next Marvel movie?`+(special?" I love you ❤️":"");
   $("app").hidden=false; render();
 }
 function fill(id,opts){ $(id).insertAdjacentHTML("beforeend",opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")); }
