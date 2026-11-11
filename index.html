@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#09090b">
+<title>FRAME — Marvel Archive</title>
+<style>
+:root{--bg:#09090b;--panel:#121216;--line:#292930;--muted:#92929d;--text:#f4f4f5;--red:#e62429;--gold:#e7bd72}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#2a1014 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}[hidden]{display:none!important}
+.wrap{max-width:1120px;margin:auto;padding:24px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:36px}
+.brand{font-weight:850;letter-spacing:.16em;font-size:13px}.brand b{color:var(--red)}
+.pill,.secondary{border:1px solid var(--line);background:#141418;border-radius:999px;padding:8px 14px;color:#d6d6dc;font-size:12px}
+.primary{border:0;background:var(--red);color:#fff;font-weight:800;padding:11px 16px;border-radius:9px;width:100%}
+.eyebrow{color:#f17c80;text-transform:uppercase;letter-spacing:.19em;font-size:10px;font-weight:800}
+h1{font-size:clamp(30px,5vw,50px);line-height:1.02;letter-spacing:-.05em;margin:10px 0 8px}
+.muted{color:var(--muted);font-size:13px}
+.login{max-width:400px;margin:12vh auto;background:#17171d;border:1px solid #383840;border-radius:18px;padding:24px}
+.field{width:100%;padding:11px 12px;background:#0d0d11;border:1px solid #34343c;border-radius:9px;color:#fff;margin:6px 0 12px}
+label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
+.dash{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:24px 0}
+.box{border:1px solid var(--line);background:linear-gradient(145deg,#17171d,#101014);border-radius:16px;padding:16px}
+.big{font-size:30px;font-weight:800;letter-spacing:-.05em}
+.track{height:6px;border-radius:99px;background:#303038;overflow:hidden;margin-top:10px}.fill{height:100%;background:linear-gradient(90deg,var(--red),#f06a6e);width:0;transition:width .25s}
+.path{cursor:pointer;border-color:#4a3a2a}.path:hover{border-color:var(--gold)}.path h3{margin:0 0 4px;font-size:15px;color:var(--gold)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 16px}
+.toolbar input,.toolbar select{background:#131318;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 12px;min-width:0}
+.toolbar input{flex:1;min-width:180px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.card{border:1px solid var(--line);background:#131317;border-radius:14px;overflow:hidden}
+.poster{height:140px;position:relative;display:flex;align-items:end;padding:12px;background:linear-gradient(135deg,var(--c1),#101016)}
+.poster:before{content:"";position:absolute;width:150px;height:150px;border:1px solid #ffffff30;border-radius:50%;right:-40px;top:-60px;box-shadow:0 0 0 16px #ffffff09}
+.poster span{position:relative;font-size:19px;line-height:.98;letter-spacing:-.04em;font-weight:900;max-width:85%;text-shadow:0 2px 12px #0008}
+.body{padding:12px}.meta{color:var(--muted);font-size:10px;margin-bottom:4px}.title{font-weight:750;font-size:13px;min-height:34px}
+.syn{color:#a5a5ae;font-size:11px;margin:6px 0 0}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}.tag{font-size:10px;color:var(--gold)}
+.check{border:1px solid #41414a;background:#1b1b21;color:#d8d8df;border-radius:8px;padding:7px 10px;font-size:10px;font-weight:750}
+.check.done{border-color:#245b43;background:#13291f;color:#9be4ba}
+.empty{color:var(--muted);text-align:center;padding:35px;border:1px dashed var(--line);border-radius:14px}
+@media(max-width:800px){.grid{grid-template-columns:repeat(3,1fr)}.dash{grid-template-columns:1fr}}
+@media(max-width:560px){.grid{grid-template-columns:repeat(2,1fr);gap:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="brand">FRAME <b>/</b> MARVEL ARCHIVE</div><div id="who" hidden><button class="pill" id="out">Sign out</button></div></header>
+
+<section id="login" class="login" hidden>
+ <div class="eyebrow">Sign in</div><h1 style="font-size:30px">Your Marvel archive.</h1>
+ <p class="muted">Enter your email and we’ll send a magic link. No password needed.</p>
+ <label for="email">EMAIL</label><input class="field" id="email" type="email" autocomplete="email">
+ <label for="dname">DISPLAY NAME (first sign-in)</label><input class="field" id="dname" maxlength="24" placeholder="e.g. Iyo">
+ <button class="primary" id="send">Send magic link</button><p class="muted" id="msg"></p>
+</section>
+
+<main id="app" hidden>
+ <div class="eyebrow">Dashboard</div><h1 id="greet"></h1>
+ <p class="muted" id="next"></p>
+ <div class="dash">
+  <div class="box"><div class="muted">YOUR COLLECTION</div><div class="big" id="pct">0%</div><div class="muted" id="cnt"></div><div class="track"><div class="fill" id="bar"></div></div></div>
+  <div class="box path" data-path="road-to-endgame"><h3>Road to Endgame</h3><div class="muted" id="p1"></div><div class="track"><div class="fill" id="b1"></div></div></div>
+  <div class="box path" data-path="road-to-doomsday"><h3>Road to Doomsday</h3><div class="muted" id="p2">Coming in Phase 3.</div><div class="track"><div class="fill" id="b2"></div></div></div>
+ </div>
+ <div class="toolbar">
+  <input id="q" type="search" placeholder="Search title or year…">
+  <select id="fStudio"><option value="">All studios</option></select>
+  <select id="fFr"><option value="">All franchises</option></select>
+  <select id="fPath"><option value="">All pathways</option></select>
+  <select id="fStat"><option value="">All</option><option value="u">To watch</option><option value="w">Watched</option></select>
+  <select id="sort"><option value="r">Release order</option><option value="a">A–Z</option></select>
+ </div>
+ <div class="grid" id="grid"></div>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// Publishable key is safe in the browser. NEVER put a service-role/secret key here.
+const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O");
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let user,name="",movies=[],paths=[],watched=new Set();
+
+async function init(){
+  const {data:{session}}=await sb.auth.getSession();
+  sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user?.id!==user?.id) location.reload(); });
+  if(!session){ $("login").hidden=false; return; }
+  user=session.user; $("who").hidden=false;
+  const [p,m,pw,w]=await Promise.all([
+    sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
+    sb.from("movies").select("id,title,release_year,synopsis,studios(name),movie_franchises(franchises(name))").eq("is_theatrical",true).order("release_year").order("id"),
+    sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
+    sb.from("watch_progress").select("movie_id").eq("user_id",user.id)]);
+  name=p.data?.display_name||user.email.split("@")[0];
+  movies=m.data||[]; paths=pw.data||[]; watched=new Set((w.data||[]).map(r=>r.movie_id));
+  fill("fStudio",[...new Set(movies.map(x=>x.studios?.name).filter(Boolean))].sort().map(s=>[s,s]));
+  fill("fFr",[...new Set(movies.flatMap(x=>x.movie_franchises.map(f=>f.franchises.name)))].sort().map(s=>[s,s]));
+  fill("fPath",paths.map(p=>[p.slug,p.name]));
+  $("greet").textContent=`Welcome back, ${name}. Ready for your next Marvel movie?`;
+  $("app").hidden=false; render();
+}
+function fill(id,opts){ $(id).insertAdjacentHTML("beforeend",opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")); }
+function hue(t){let h=0;for(const c of t)h=(h*31+c.charCodeAt(0))%360;return `hsl(${h} 45% 24%)`;}
+const pathMovies=slug=>{const p=paths.find(x=>x.slug===slug);return p?p.pathway_movies.map(x=>x.movie_id):[];};
+
+function render(){
+  const total=movies.length,done=movies.filter(m=>watched.has(m.id)).length,pct=total?Math.round(done/total*100):0;
+  $("pct").textContent=pct+"%";$("cnt").textContent=`${done} / ${total} watched`;$("bar").style.width=pct+"%";
+  [["road-to-endgame","p1","b1"],["road-to-doomsday","p2","b2"]].forEach(([s,t,b])=>{
+    const ids=pathMovies(s); if(!ids.length) return;
+    const d=ids.filter(i=>watched.has(i)).length; $(t).textContent=`${d} / ${ids.length} watched`; $(b).style.width=Math.round(d/ids.length*100)+"%";});
+  const nx=pathMovies("road-to-endgame").map(id=>movies.find(m=>m.id===id)).filter(Boolean).sort((a,b)=>a.release_year-b.release_year).find(m=>!watched.has(m.id))||movies.find(m=>!watched.has(m.id));
+  $("next").textContent=nx?`Up next: ${nx.title} (${nx.release_year})`:"You’ve watched everything in the library.";
+  const q=$("q").value.toLowerCase(),st=$("fStudio").value,fr=$("fFr").value,pa=$("fPath").value,sw=$("fStat").value;
+  const pset=pa?new Set(pathMovies(pa)):null;
+  let list=movies.filter(m=>(!q||m.title.toLowerCase().includes(q)||String(m.release_year).includes(q))
+    &&(!st||m.studios?.name===st)&&(!fr||m.movie_franchises.some(f=>f.franchises.name===fr))
+    &&(!pset||pset.has(m.id))&&(!sw||(sw==="w")===watched.has(m.id)));
+  if($("sort").value==="a") list=[...list].sort((a,b)=>a.title.localeCompare(b.title));
+  $("grid").innerHTML=list.map(m=>{const d=watched.has(m.id);
+    return `<article class="card"><div class="poster" style="--c1:${hue(m.title)}"><span>${esc(m.title)}</span></div><div class="body">
+    <div class="meta">${m.release_year} · ${esc(m.studios?.name||"")}</div><div class="title">${esc(m.title)}</div>
+    ${m.synopsis?`<p class="syn">${esc(m.synopsis)}</p>`:""}
+    <div class="foot"><span class="tag">${esc(m.movie_franchises.map(f=>f.franchises.name).join(", "))}</span>
+    <button class="check ${d?"done":""}" data-id="${m.id}">${d?"✓ Watched":"Mark watched"}</button></div></div></article>`}).join("")
+    ||'<div class="empty" style="grid-column:1/-1">No movies match.</div>';
+}
+$("grid")?.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-id]"); if(!b) return; const id=+b.dataset.id, was=watched.has(id);
+  was?watched.delete(id):watched.add(id); render();               // optimistic
+  const r=was?await sb.from("watch_progress").delete().eq("user_id",user.id).eq("movie_id",id)
+             :await sb.from("watch_progress").upsert({user_id:user.id,movie_id:id});
+  if(r.error){ was?watched.add(id):watched.delete(id); render(); alert("Couldn’t save: "+r.error.message); }
+});
+["q","fStudio","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
+document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{$("fPath").value=p.dataset.path;render();$("grid").scrollIntoView({behavior:"smooth"});});
+$("out").onclick=async()=>{await sb.auth.signOut();location.reload();};
+$("send").onclick=async()=>{
+  const email=$("email").value.trim(); if(!email) return;
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,data:{display_name:$("dname").value.trim()}}});
+  $("msg").textContent=error?error.message:"Check your email for the sign-in link.";
+};
+init();
+</script>
+</body>
+</html>
