@@ -99,7 +99,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
  </div>
  <div class="layout" id="layout"><div id="list"></div><div id="right"><div class="prog" id="prog"></div><aside id="side" hidden></aside></div></div>
  <p class="muted" style="margin-top:28px;font-size:11px">Posters and IDs: this product uses the TMDB API but is not endorsed or certified by TMDB.</p>
- <div class="pl" id="pl" hidden><div class="plbox"><div class="plbar"><button class="secondary" id="plx">← Back to details</button><span class="muted" id="plt"></span></div><div class="plv" id="plv"></div></div></div>
+ <div class="pl" id="pl" hidden><div class="plbox"><div class="plbar"><button class="secondary" id="plx">← Back to details</button><span class="muted" id="plt"></span><span id="plc" style="display:flex;gap:6px;align-items:center;color:var(--muted);font-size:12px"></span></div><div class="plv" id="plv"></div></div></div>
  <div class="bulk" id="bulk" hidden><span id="bn"></span><button class="primary" id="bw" style="width:auto">Mark watched</button><button class="secondary" id="bu" style="border-radius:9px">Mark unwatched</button><button class="secondary" id="bc" style="border-radius:9px">Clear</button></div>
 </main>
 </div>
@@ -109,7 +109,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 // Publishable key is safe in the browser. NEVER put a service-role/secret key here.
 const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 // Free TMDB API key (themoviedb.org → Settings → API). Leave "" to keep the generated posters.
-const TMDB_KEY="bbc8e71cb7878611b0891b98d3997917";
+const TMDB_KEY="";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
@@ -163,25 +163,30 @@ const io="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEac
   if(m&&!tm[m.id]) tmdb(m).then(r=>{ if(r&&r.p){const el=en.target.querySelector(".poster"); el.classList.add("has"); el.style.backgroundImage=`url(https://image.tmdb.org/t/p/w185${r.p})`;} });
 }),{rootMargin:"200px"}):null;
 // ---- player: the link comes from the player_template setting in the database ----
-function embedUrl(imdb){const t=settings.player_template||"";
+function embedUrl(imdb,m,se,ep){
+  const tv=m&&m.kind==="series", t=(tv?settings.player_template_tv:settings.player_template)||"";
   if(!t.includes("{imdb_id}")||!/^tt\d{7,10}$/.test(imdb||"")) return null;
-  try{const u=new URL(t.replace("{imdb_id}",imdb)); return u.protocol==="https:"?u.href:null;}catch{return null;}}
+  const n=v=>String(Math.max(1,parseInt(v)||1));
+  try{const u=new URL(t.replace("{imdb_id}",imdb).replace("{season}",n(se)).replace("{episode}",n(ep))); return u.protocol==="https:"?u.href:null;}catch{return null;}}
 async function imdbOf(m){
   if(m.imdb_id) return m.imdb_id;
   const r=await tmdb(m); if(!r||!r.id) return null; if(r.imdb) return r.imdb;
-  try{const j=await (await fetch(`https://api.themoviedb.org/3/movie/${r.id}/external_ids?api_key=${TMDB_KEY}`)).json();
+  try{const j=await (await fetch(`https://api.themoviedb.org/3/${m.kind==="series"?"tv":"movie"}/${r.id}/external_ids?api_key=${TMDB_KEY}`)).json();
     r.imdb=j.imdb_id||null; localStorage.setItem("frame_tmdb_v1",JSON.stringify(tm)); return r.imdb;}catch{return null;}}
 async function play(id){
-  const m=movies.find(x=>x.id===id); if(!m) return;
-  $("plt").textContent=m.title; $("pl").hidden=false; $("plv").textContent="Loading…";
+  const m=movies.find(x=>x.id===id); if(!m) return; const tv=m.kind==="series";
+  $("plt").textContent=m.title; $("plc").innerHTML=""; $("pl").hidden=false; $("plv").textContent="Loading…";
+  if(!(tv?settings.player_template_tv:settings.player_template)){$("plv").textContent="The player isn’t set up yet. A source link still needs to be added.";return;}
   const imdb=await imdbOf(m);
   if(!imdb){$("plv").textContent="No IMDb ID for this title yet, so it can’t be played.";return;}
-  const url=embedUrl(imdb);
-  if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
-  const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
-  f.setAttribute("allow","fullscreen; encrypted-media"); f.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
-  f.onerror=()=>{$("plv").textContent="This source couldn’t be loaded.";};
-  $("plv").textContent=""; $("plv").appendChild(f);
+  const load=()=>{
+    const url=embedUrl(imdb,m,$("ps")&&$("ps").value,$("pe")&&$("pe").value);
+    if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
+    const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
+    f.setAttribute("allow","fullscreen; encrypted-media"); f.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
+    $("plv").textContent=""; $("plv").appendChild(f);};
+  if(tv){ $("plc").innerHTML='Season <input id="ps" class="field" type="number" min="1" value="1" style="width:64px;margin:0"> Episode <input id="pe" class="field" type="number" min="1" value="1" style="width:64px;margin:0"> <button class="secondary" id="pgo" style="border-radius:9px">Load</button>'; $("pgo").onclick=load; }
+  load();
 }
 
 function render(){
@@ -244,7 +249,7 @@ function renderSide(){
    <div class="chips">${m.frs.map(f=>`<span class="chip">${esc(f)}</span>`).join("")}${ps.map(p=>`<span class="chip g">${esc(p)}</span>`).join("")}</div>
    <p class="syn">${m.synopsis?esc(m.synopsis):"Synopsis coming soon."}</p>
    <button class="check ${d?"done":""}" data-id="${m.id}">${d?"✓ Watched (tap to undo)":"Mark as watched"}</button>
-   ${m.kind==="movie"&&embedUrl("tt0000000")?`<button class="play" data-play="${m.id}">▶ Play</button>`:""}
+   ${m.kind!=="assembled"?`<button class="play" data-play="${m.id}">▶ Play</button>`:""}
    <div class="stars">${[1,2,3,4,5].map(i=>{const r=(notes[m.id]||{}).rating||0;return `<b class="st" data-star="${i}" style="--f:${r>=i?100:r>=i-.5?50:0}%">★</b>`}).join("")}</div>
    <div class="row">${(notes[m.id]||{}).rating?(notes[m.id].rating+" / 5 · tap the same star to clear"):"Not rated · tap a star (left half = half star)"}</div>
    <textarea class="field note" data-note="${m.id}" rows="4" placeholder="Your private notes…">${esc((notes[m.id]||{}).notes||"")}</textarea>`;
@@ -267,7 +272,7 @@ document.addEventListener("click",async e=>{
 });
 ["q","fKind","fStudio","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
 document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{$("fPath").value=p.dataset.path;render();$("list").scrollIntoView({behavior:"smooth"});});
-$("plx").onclick=()=>{$("pl").hidden=true;$("plv").textContent="";};
+$("plx").onclick=()=>{$("pl").hidden=true;$("plv").textContent="";$("plc").innerHTML="";};
 $("selmode").onclick=()=>{selMode=!selMode;if(!selMode)picked.clear();render();};
 $("bw").onclick=()=>bulk(true);$("bu").onclick=()=>bulk(false);$("bc").onclick=()=>{picked.clear();render();};
 document.addEventListener("change",e=>{const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
