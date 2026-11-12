@@ -91,6 +91,19 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
  <div class="toolbar">
   <input id="q" type="search" placeholder="Search title or year…">
   <select id="fStudio"><option value="">All studios</option></select>
+  <select id="fPhase">
+  <option value="">All categories</option>
+  <option value="phases">All MCU phases</option>
+  <option value="nonphase">Non-phase titles</option>
+  <optgroup label="Individual phases">
+    <option value="Phase One">Phase One</option>
+    <option value="Phase Two">Phase Two</option>
+    <option value="Phase Three">Phase Three</option>
+    <option value="Phase Four">Phase Four</option>
+    <option value="Phase Five">Phase Five</option>
+    <option value="Phase Six">Phase Six</option>
+  </optgroup>
+</select>
   <select id="fFr"><option value="">All franchises</option></select>
   <select id="fPath"><option value="">All pathways</option></select>
   <select id="fKind"><option value="">All types</option><option value="movie">Movies</option><option value="series">Series</option><option value="ss">Shorts &amp; specials</option><option value="assembled">Assembled</option></select>
@@ -218,10 +231,15 @@ function render(){
   const nx=pm.find(m=>!watched.has(m.id))||movies.find(m=>!watched.has(m.id));
   $("next").textContent=nx?`Up next: ${nx.title} (${nx.release_year})`:"You’ve watched everything in the library.";
 
-  const q=$("q").value.toLowerCase(),kf=$("fKind").value,st=$("fStudio").value,fr=$("fFr").value,pa=$("fPath").value,sw=$("fStat").value,so=$("sort").value;
+  const q=$("q").value.toLowerCase(),kf=$("fKind").value,st=$("fStudio").value,fp=$("fPhase").value,fr=$("fFr").value,pa=$("fPath").value,sw=$("fStat").value,so=$("sort").value;
   const pset=pa?new Set(pathMovies(pa)):null;
   const list=movies.filter(m=>(!q||m.title.toLowerCase().includes(q)||String(m.release_year).includes(q))
-    &&(!kf||(kf==="ss"?["short","special"].includes(m.kind):m.kind===kf))&&(!st||m.studio===st)&&(!fr||m.frs.includes(fr))&&(!pset||pset.has(m.id))&&(!sw||(sw==="w")===watched.has(m.id)));
+    &&(!kf||(kf==="ss"?["short","special"].includes(m.kind):m.kind===kf))
+    &&(!st||m.studio===st)
+    &&(!fp||(fp==="phases"?PHASES.includes(m.phase):fp==="nonphase"?!PHASES.includes(m.phase):m.phase===fp))
+    &&(!fr||m.frs.includes(fr))
+    &&(!pset||pset.has(m.id))
+    &&(!sw||(sw==="w")===watched.has(m.id)));
   const cmp=so==="a"?(a,b)=>a.title.localeCompare(b.title):so==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
   list.sort(cmp);
   GR={}; LAST=list; const G=GR; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
@@ -314,7 +332,7 @@ document.addEventListener("click",async e=>{
   const c=e.target.closest("[data-open]");
   if(c){ const id=+c.dataset.open; if(selMode){ picked.has(id)?picked.delete(id):picked.add(id); } else sel=sel===id?null:id; render(); }
 });
-["q","fKind","fStudio","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
+["q","fKind","fStudio","fPhase","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
 document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{$("fPath").value=p.dataset.path;render();$("list").scrollIntoView({behavior:"smooth"});});
 $("plx").onclick=()=>{$("pl").hidden=true;$("plv").textContent="";$("plc").innerHTML="";};
 $("selmode").onclick=()=>{selMode=!selMode;if(!selMode)picked.clear();render();};
