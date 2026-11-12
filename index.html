@@ -162,32 +162,22 @@ const fmt=d=>d?new Date(d).toLocaleDateString("en-US",{year:"numeric",month:"lon
 
 
 function thumb(m, big) {
-  const s = (m.studio === "Marvel Studios"
-    ? "MARVEL STUDIOS"
-    : (m.studio || "").toUpperCase()) +
-    (m.kind && m.kind !== "movie"
-      ? " · " + (KIND[m.kind] || m.kind).toUpperCase()
-      : "");
-
+  const s = (m.studio === "Marvel Studios" ? "MARVEL STUDIOS" : (m.studio || "").toUpperCase()) +
+    (m.kind && m.kind !== "movie" ? " · " + (KIND[m.kind] || m.kind).toUpperCase() : "");
   const custom = (m.custom_poster || "").trim();
-  const p = tm[m.id]?.p || "";
-
-  const image = custom
-    ? custom
-    : p
-      ? `https://image.tmdb.org/t/p/${big ? "w342" : "w185"}${p}`
-      : "";
-
-  const bg = image
-    ? `;background-image:url('${esc(image)}')`
-    : "";
-
-  return `<div class="poster ${image ? "has" : ""}" style="--c1:${hue(m.title)}${bg}">
-    <i>${esc(s)}</i>
-    <b>${esc(m.title)}</b>
-    <em>${m.release_year}</em>
-  </div>`;
+  const p = tm[m.id] && tm[m.id].p;
+  const image = custom || (p ? `https://image.tmdb.org/t/p/${big ? "w342" : "w185"}${p}` : "");
+  return `<div class="poster ${image ? "has" : ""}" style="--c1:${hue(m.title)}" ${image ? `data-img="${esc(image)}"` : ""}>
+    <i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em></div>`;
 }
+
+// Puts the poster pictures on the cards every time the page redraws them.
+function applyPosters() {
+  document.querySelectorAll(".poster[data-img]").forEach(el => {
+    if (!el.style.backgroundImage) el.style.backgroundImage = 'url("' + el.dataset.img + '")';
+  });
+}
+new MutationObserver(applyPosters).observe(document.body, { childList: true, subtree: true });
 
 
 
