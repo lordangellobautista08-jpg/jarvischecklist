@@ -28,7 +28,7 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 6px}
 .toolbar input,.toolbar select{background:#131318;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 12px;min-width:0}
 .toolbar input{flex:1;min-width:180px}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:20px;align-items:start}.layout.open{grid-template-columns:250px minmax(0,1fr) 330px}
 
 .sec{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .sec h2{margin:0;font-size:15px;letter-spacing:.02em}.sec h2.mcu{color:var(--gold)}.sec span{color:var(--muted);font-size:11px}
@@ -48,9 +48,10 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .play{width:100%;margin-top:8px;border:0;background:var(--red);color:#fff;font-weight:800;padding:10px;border-radius:9px}
 .pl{position:fixed;inset:0;background:#000e;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}.plbox{width:min(1000px,100%)}.plbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .plv{aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;place-items:center;color:var(--muted);text-align:center;padding:14px}.plv iframe{width:100%;height:100%;border:0}
+.ga{display:none;margin-left:10px;padding:3px 10px;font-size:11px}.selmode .ga{display:inline-block}.mini{width:64px;display:inline-block;margin:0 8px 0 4px;padding:6px 8px}.eph{margin:16px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .note{resize:vertical;font-size:13px;margin:8px 0 0}.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1a20;border:1px solid #4a4a54;border-radius:14px;padding:10px 14px;box-shadow:0 10px 40px #000c}
 .empty{color:var(--muted);text-align:center;padding:35px;border:1px dashed var(--line);border-radius:14px}
-#right{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:12px}aside,.prog{border:1px solid #383840;background:#15151a;border-radius:16px;padding:16px}
+#left,aside{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}aside,.prog{border:1px solid #383840;background:#15151a;border-radius:16px;padding:16px}
 aside .poster{aspect-ratio:16/10;border-radius:10px;margin-bottom:12px}aside .poster b{font-size:22px}
 aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.chip{border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:11px;color:#c9c9d1}.chip.g{color:var(--gold);border-color:#4a3a2a}
@@ -59,7 +60,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .check{width:100%;border:1px solid #41414a;background:#1b1b21;color:#d8d8df;border-radius:9px;padding:10px;font-weight:750}
 .check.done{border-color:#245b43;background:#13291f;color:#9be4ba}
 .x{float:right;background:none;border:0;color:var(--muted);font-size:20px;line-height:1}
-@media(max-width:900px){.dash{grid-template-columns:1fr}.layout{grid-template-columns:minmax(0,1fr)}#right{position:static;max-height:none;overflow:visible;order:-1}
+@media(max-width:900px){.dash{grid-template-columns:1fr}.layout,.layout.open{grid-template-columns:minmax(0,1fr)}#left{position:static;max-height:none;overflow:visible;order:-1}
  aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);max-height:84vh;overflow:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}}
 @media(max-width:560px){.grid{grid-template-columns:repeat(3,1fr);gap:9px}.poster b{font-size:11px}}
 </style>
@@ -97,10 +98,10 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
   <select id="sort"><option value="r">Release order</option><option value="t">MCU timeline order</option><option value="a">A–Z</option></select>
   <button class="pill" id="selmode">Select</button>
  </div>
- <div class="layout" id="layout"><div id="list"></div><div id="right"><div class="prog" id="prog"></div><aside id="side" hidden></aside></div></div>
+ <div class="layout" id="layout"><div id="left"><div class="prog" id="prog"></div></div><div id="list"></div><aside id="side" hidden></aside></div>
  <p class="muted" style="margin-top:28px;font-size:11px">Posters and IDs: this product uses the TMDB API but is not endorsed or certified by TMDB.</p>
  <div class="pl" id="pl" hidden><div class="plbox"><div class="plbar"><button class="secondary" id="plx">← Back to details</button><span class="muted" id="plt"></span><span id="plc" style="display:flex;gap:6px;align-items:center;color:var(--muted);font-size:12px"></span></div><div class="plv" id="plv"></div></div></div>
- <div class="bulk" id="bulk" hidden><span id="bn"></span><button class="primary" id="bw" style="width:auto">Mark watched</button><button class="secondary" id="bu" style="border-radius:9px">Mark unwatched</button><button class="secondary" id="bc" style="border-radius:9px">Clear</button></div>
+ <div class="bulk" id="bulk" hidden><span id="bn"></span><button class="secondary" id="ba" style="border-radius:9px">Select all shown</button><button class="primary" id="bw" style="width:auto">Mark watched</button><button class="secondary" id="bu" style="border-radius:9px">Mark unwatched</button><button class="secondary" id="bc" style="border-radius:9px">Clear</button></div>
 </main>
 </div>
 
@@ -109,29 +110,33 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 // Publishable key is safe in the browser. NEVER put a service-role/secret key here.
 const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 // Free TMDB API key (themoviedb.org → Settings → API). Leave "" to keep the generated posters.
-const TMDB_KEY="bbc8e71cb7878611b0891b98d3997917";
+const TMDB_KEY="";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Other studios"];
-let settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v1")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
+let GR={},LAST=[],epNotes={},plays={},epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v1")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
   sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user?.id!==user?.id) location.reload(); });
   if(!session){ $("login").hidden=false; return; }
   user=session.user; $("who").hidden=false;
-  const [p,m,pw,w,nt,st]=await Promise.all([
+  const [p,m,pw,w,nt,st,en,pst]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
     sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,synopsis,studios(name),movie_franchises(franchises(name))"),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
-    sb.from("app_settings").select("key,value")]);
+    sb.from("app_settings").select("key,value"),
+    sb.from("episode_notes").select("movie_id,season,episode,rating,notes").eq("user_id",user.id),
+    sb.from("play_state").select("movie_id,season,episode").eq("user_id",user.id)]);
   name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
   movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:x.movie_franchises.map(f=>f.franchises.name)}));
-  (st.data||[]).forEach(r=>settings[r.key]=r.value); paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
+  (st.data||[]).forEach(r=>settings[r.key]=r.value);
+  (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
+  (pst.data||[]).forEach(r=>plays[r.movie_id]={season:r.season,episode:r.episode}); paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
   fill("fStudio",[...new Set(movies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
   fill("fFr",[...new Set(movies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
   fill("fPath",paths.map(p=>[p.slug,p.name]));
@@ -183,9 +188,10 @@ async function play(id){
     const url=embedUrl(imdb,m,$("ps")&&$("ps").value,$("pe")&&$("pe").value);
     if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
     const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
-    f.setAttribute("allow","fullscreen; encrypted-media");
-    $("plv").textContent=""; $("plv").appendChild(f);};
-  if(tv){ $("plc").innerHTML='Season <input id="ps" class="field" type="number" min="1" value="1" style="width:64px;margin:0"> Episode <input id="pe" class="field" type="number" min="1" value="1" style="width:64px;margin:0"> <button class="secondary" id="pgo" style="border-radius:9px">Load</button>'; $("pgo").onclick=load; }
+    f.setAttribute("allow","fullscreen; encrypted-media"); f.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
+    $("plv").textContent=""; $("plv").appendChild(f);
+    savePlay(id,tv?Math.max(1,parseInt($("ps").value)||1):1,tv?Math.max(1,parseInt($("pe").value)||1):1);};
+  if(tv){ $("plc").innerHTML=`Season <input id="ps" class="field" type="number" min="1" value="${(plays[id]||{}).season||1}" style="width:64px;margin:0"> Episode <input id="pe" class="field" type="number" min="1" value="${(plays[id]||{}).episode||1}" style="width:64px;margin:0"> <button class="secondary" id="pgo" style="border-radius:9px">Load</button>`; $("pgo").onclick=load; }
   load();
 }
 
@@ -205,9 +211,9 @@ function render(){
     &&(!kf||(kf==="ss"?["short","special"].includes(m.kind):m.kind===kf))&&(!st||m.studio===st)&&(!fr||m.frs.includes(fr))&&(!pset||pset.has(m.id))&&(!sw||(sw==="w")===watched.has(m.id)));
   const cmp=so==="a"?(a,b)=>a.title.localeCompare(b.title):so==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
   list.sort(cmp);
-  const G={}; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
+  GR={}; LAST=list; const G=GR; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
   const keys=Object.keys(G).sort((a,b)=>{const f=k=>k.startsWith("MCU")?-1:ORDER.indexOf(k);return f(a)-f(b);});
-  $("list").innerHTML=keys.map(k=>`<section><div class="sec"><h2 class="${PHASES.includes(k)||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${G[k].filter(m=>watched.has(m.id)).length} / ${G[k].length} watched</span></div>
+  $("list").innerHTML=keys.map(k=>`<section><div class="sec"><h2 class="${PHASES.includes(k)||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${G[k].filter(m=>watched.has(m.id)).length} / ${G[k].length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
    <div class="grid">${G[k].map(m=>`<article class="card ${watched.has(m.id)?"done":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`).join("")}</div></section>`).join("")
    ||'<div class="empty">No movies match.</div>';
   renderSide(); renderProg();
@@ -226,6 +232,25 @@ async function saveNote(id,patch){
   const n={...(notes[id]||{}),...patch}; notes[id]=n;
   const {error}=await sb.from("movie_notes").upsert({user_id:user.id,movie_id:id,rating:n.rating??null,notes:n.notes||null,updated_at:new Date().toISOString()});
   if(error) alert("Couldn’t save: "+error.message);
+}
+const curEp=id=>epSel[id]||(plays[id]?{s:plays[id].season,e:plays[id].episode}:{s:1,e:1});
+async function saveEp(id,s,e,patch){
+  const k=`${id}:${s}:${e}`, n={...(epNotes[k]||{}),...patch}; epNotes[k]=n;
+  const {error}=await sb.from("episode_notes").upsert({user_id:user.id,movie_id:id,season:s,episode:e,rating:n.rating??null,notes:n.notes||null,updated_at:new Date().toISOString()});
+  if(error) alert("Couldn’t save: "+error.message);
+}
+async function savePlay(id,s,e){
+  plays[id]={season:s,episode:e};
+  const {error}=await sb.from("play_state").upsert({user_id:user.id,movie_id:id,season:s,episode:e,last_played_at:new Date().toISOString()});
+  if(error) console.warn(error.message); renderSide();
+}
+function epBlock(m){
+  const c=curEp(m.id), n=epNotes[`${m.id}:${c.s}:${c.e}`]||{}, r=n.rating||0;
+  return `<h4 class="eph">Episode notes</h4>
+   <div class="row">Season <input class="field mini" type="number" min="1" value="${c.s}" data-ep="s"> Episode <input class="field mini" type="number" min="1" value="${c.e}" data-ep="e"></div>
+   <div class="stars">${[1,2,3,4,5].map(i=>`<b class="st" data-estar="${i}" style="--f:${r>=i?100:r>=i-.5?50:0}%">★</b>`).join("")}</div>
+   <div class="row">${r?r+" / 5 for S"+c.s+" E"+c.e:"Not rated · tap a star for this episode"}</div>
+   <textarea class="field note" data-enote="1" rows="3" placeholder="Notes for S${c.s} E${c.e}…">${esc(n.notes||"")}</textarea>`;
 }
 async function bulk(mark){
   const ids=[...picked]; if(!ids.length) return; const before=new Set(watched);
@@ -249,10 +274,10 @@ function renderSide(){
    <div class="chips">${m.frs.map(f=>`<span class="chip">${esc(f)}</span>`).join("")}${ps.map(p=>`<span class="chip g">${esc(p)}</span>`).join("")}</div>
    <p class="syn">${m.synopsis?esc(m.synopsis):"Synopsis coming soon."}</p>
    <button class="check ${d?"done":""}" data-id="${m.id}">${d?"✓ Watched (tap to undo)":"Mark as watched"}</button>
-   ${m.kind!=="assembled"?`<button class="play" data-play="${m.id}">▶ Play</button>`:""}
+   ${m.kind!=="assembled"?`<button class="play" data-play="${m.id}">${plays[m.id]?"▶ Continue"+(m.kind==="series"?" S"+plays[m.id].season+" · E"+plays[m.id].episode:""):"▶ Play"}</button>`:""}
    <div class="stars">${[1,2,3,4,5].map(i=>{const r=(notes[m.id]||{}).rating||0;return `<b class="st" data-star="${i}" style="--f:${r>=i?100:r>=i-.5?50:0}%">★</b>`}).join("")}</div>
    <div class="row">${(notes[m.id]||{}).rating?(notes[m.id].rating+" / 5 · tap the same star to clear"):"Not rated · tap a star (left half = half star)"}</div>
-   <textarea class="field note" data-note="${m.id}" rows="4" placeholder="Your private notes…">${esc((notes[m.id]||{}).notes||"")}</textarea>`;
+   <textarea class="field note" data-note="${m.id}" rows="4" placeholder="Your private notes…">${esc((notes[m.id]||{}).notes||"")}</textarea>${m.kind==="series"?epBlock(m):""}`;
 }
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-id]");
@@ -262,7 +287,12 @@ document.addEventListener("click",async e=>{
                :await sb.from("watch_progress").upsert({user_id:user.id,movie_id:id});
     if(r.error){ was?watched.add(id):watched.delete(id); render(); alert("Couldn’t save: "+r.error.message); }
     return; }
+  const gb=e.target.closest("[data-grp]");
+  if(gb){ const arr=GR[gb.dataset.grp]||[]; const all=arr.every(m=>picked.has(m.id)); arr.forEach(m=>all?picked.delete(m.id):picked.add(m.id)); render(); return; }
   const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
+  const es=e.target.closest("[data-estar]");
+  if(es&&sel){ const rc=es.getBoundingClientRect(), i=+es.dataset.estar, r=i-((e.clientX-rc.left)<rc.width/2?.5:0), c=curEp(sel);
+    const cur=(epNotes[`${sel}:${c.s}:${c.e}`]||{}).rating; saveEp(sel,c.s,c.e,{rating:cur===r?null:r}); render(); return; }
   const star=e.target.closest("[data-star]");
   if(star&&sel){ const rc=star.getBoundingClientRect(), i=+star.dataset.star, r=i-((e.clientX-rc.left)<rc.width/2?.5:0);
     const cur=(notes[sel]||{}).rating; saveNote(sel,{rating:cur===r?null:r}); render(); return; }
@@ -274,8 +304,11 @@ document.addEventListener("click",async e=>{
 document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{$("fPath").value=p.dataset.path;render();$("list").scrollIntoView({behavior:"smooth"});});
 $("plx").onclick=()=>{$("pl").hidden=true;$("plv").textContent="";$("plc").innerHTML="";};
 $("selmode").onclick=()=>{selMode=!selMode;if(!selMode)picked.clear();render();};
+$("ba").onclick=()=>{LAST.forEach(m=>picked.add(m.id));render();};
 $("bw").onclick=()=>bulk(true);$("bu").onclick=()=>bulk(false);$("bc").onclick=()=>{picked.clear();render();};
-document.addEventListener("change",e=>{const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
+document.addEventListener("change",e=>{
+  if(e.target.closest("[data-ep]")&&sel){ const sd=$("side"), v=k=>Math.max(1,parseInt(sd.querySelector(`[data-ep="${k}"]`).value)||1); epSel[sel]={s:v("s"),e:v("e")}; render(); return; }
+  if(e.target.closest("[data-enote]")&&sel){ const c=curEp(sel); saveEp(sel,c.s,c.e,{notes:e.target.value}); return; }const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
 $("out").onclick=async()=>{await sb.auth.signOut();location.reload();};
 $("send").onclick=async()=>{
   const email=$("email").value.trim(); if(!email) return;
