@@ -44,7 +44,7 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .circ{display:none;position:absolute;top:8px;left:8px;z-index:2;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#0008}.selmode .circ{display:block}.pick .circ{background:var(--red);border-color:var(--red);box-shadow:inset 0 0 0 3px #0009}.pick{border-color:var(--red)}
 .pr{margin:9px 0;font-size:12px}.pr>div:first-child{display:flex;justify-content:space-between}.pr b{color:var(--gold);font-weight:700}.pr .track{margin-top:5px;height:4px}.prog h4{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .stars{display:flex;gap:2px;margin:14px 0 4px}.st{font-size:26px;line-height:1;cursor:pointer;background:linear-gradient(90deg,var(--gold) var(--f),#3a3a43 var(--f));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.has{background-size:cover;background-position:center top}.has i,.has b,.has em,.has:before{display:none}
+.pimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:1}
 .play{width:100%;margin-top:8px;border:0;background:var(--red);color:#fff;font-weight:800;padding:10px;border-radius:9px}
 .pl{position:fixed;inset:0;background:#000e;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}.plbox{width:min(1000px,100%)}.plbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .plv{aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;place-items:center;color:var(--muted);text-align:center;padding:14px}.plv iframe{width:100%;height:100%;border:0}
@@ -150,15 +150,13 @@ const rkey=m=>m.release_date||`${m.release_year}-07-01`;
 const group=m=>m.phase||(["20th Century Fox","Sony Pictures"].includes(m.studio)?m.studio:"Other studios");
 const fmt=d=>d?new Date(d).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"}):"";
 
+const pimg=u=>`<img class="pimg" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`;
 function thumb(m,big){
   const s=(m.studio==="Marvel Studios"?"MARVEL STUDIOS":(m.studio||"").toUpperCase())+(m.kind&&m.kind!=="movie"?" · "+(KIND[m.kind]||m.kind).toUpperCase():"");
   const custom=(m.custom_poster||"").trim(), p=tm[m.id]&&tm[m.id].p;
   const image=custom||(p?`https://image.tmdb.org/t/p/${big?"w342":"w185"}${p}`:"");
-  return `<div class="poster ${image?"has":""}" style="--c1:${hue(m.title)}" ${image?`data-img="${esc(image)}"`:""}><i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em></div>`;
+  return `<div class="poster" style="--c1:${hue(m.title)}"><i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em>${image?pimg(image):""}</div>`;
 }
-// Paints the poster pictures onto cards every time the page redraws them.
-function applyPosters(){document.querySelectorAll(".poster[data-img]").forEach(el=>{if(!el.style.backgroundImage)el.style.backgroundImage='url("'+el.dataset.img+'")';});}
-new MutationObserver(applyPosters).observe(document.body,{childList:true,subtree:true});
 
 async function tmdb(m){
   if(tm[m.id]) return tm[m.id];
@@ -178,7 +176,7 @@ const io="IntersectionObserver" in window?new IntersectionObserver(entries=>{
     if(!m||m.custom_poster||tm[m.id]) return;
     const r=await tmdb(m);
     if(r&&r.p){const card=document.querySelector(`.card[data-open="${m.id}"]`), el=card&&card.querySelector(".poster");
-      if(el){el.classList.add("has"); el.dataset.img=`https://image.tmdb.org/t/p/w185${r.p}`; applyPosters();}}
+      if(el&&!el.querySelector(".pimg")) el.insertAdjacentHTML("beforeend",pimg(`https://image.tmdb.org/t/p/w185${r.p}`));}
   });
 },{rootMargin:"200px"}):null;
 // ---- player: the link comes from the player_template setting in the database ----
