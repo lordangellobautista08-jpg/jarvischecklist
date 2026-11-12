@@ -87,7 +87,7 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .stars{display:flex;gap:2px;margin:14px 0 4px}.st{font-size:26px;line-height:1;cursor:pointer;background:linear-gradient(90deg,var(--gold) var(--f),#3a3a43 var(--f));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .pimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:1}
 .play{width:100%;margin-top:8px;border:0;background:var(--red);color:#fff;font-weight:800;padding:10px;border-radius:9px}
-.pl{position:fixed;inset:0;background:#000e;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}.plbox{width:min(1000px,100%)}.plbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.pl{position:fixed;inset:0;background:#000e;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}.plbox{width:min(1000px,100%)}@media(max-width:900px){.plbox{width:min(92vw,calc((100dvh - 90px)*16/9))}}@media(max-height:500px){.plbox{width:min(80vw,calc((100dvh - 70px)*16/9))}.pl p{display:none}}.plbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .plv{aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;place-items:center;color:var(--muted);text-align:center;padding:14px}.plv iframe{width:100%;height:100%;border:0}
 .ga{display:none;margin-left:10px;padding:3px 10px;font-size:11px}.selmode .ga{display:inline-block}.mini{width:64px;display:inline-block;margin:0 8px 0 4px;padding:6px 8px}.eph{margin:16px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .note{resize:vertical;font-size:13px;margin:8px 0 0}.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1a20;border:1px solid #4a4a54;border-radius:14px;padding:10px 14px;box-shadow:0 10px 40px #000c}
@@ -181,14 +181,14 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Marvel Television","Other studios"];
-let GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
+let epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
   sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user?.id!==user?.id) location.reload(); });
   if(!session){ $("login").hidden=false; return; }
   user=session.user; $("who").hidden=false;
-  const [p,m,pw,w,nt,st,en,pst]=await Promise.all([
+  const [p,m,pw,w,nt,st,en,pst,ew]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
     sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,studios(name),movie_franchises(franchises(name))"),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
@@ -200,12 +200,14 @@ async function init(){
   .select("movie_id,season,episode,last_played_at")
   .eq("user_id",user.id)
   .order("last_played_at",{ascending:false,nullsFirst:false})
-  .limit(10)]);
+  .limit(10),
+sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id)]);
   name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
   movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:x.movie_franchises.map(f=>f.franchises.name)}));
   (st.data||[]).forEach(r=>settings[r.key]=r.value);
   (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
   playHistory=pst.data||[];
+ (ew.data||[]).forEach(r=>epWatched.add(${r.movie_id}:${r.season}:${r.episode}));
 playHistory.forEach(r=>{
   plays[r.movie_id]={season:r.season,episode:r.episode};
 });
@@ -272,15 +274,13 @@ async function play(id){
   if(!(tv?settings.player_template_tv:settings.player_template)){$("plv").textContent="The player isn’t set up yet. A source link still needs to be added.";return;}
   const imdb=await imdbOf(m);
   if(!imdb){$("plv").textContent="No IMDb ID for this title yet, so it can’t be played.";return;}
-  const load=()=>{
-    const url=embedUrl(imdb,m,$("ps")&&$("ps").value,$("pe")&&$("pe").value);
-    if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
-    const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
-    f.setAttribute("allow","fullscreen; encrypted-media");
-    $("plv").textContent=""; $("plv").appendChild(f);
-    savePlay(id,tv?Math.max(1,parseInt($("ps").value)||1):1,tv?Math.max(1,parseInt($("pe").value)||1):1);};
-  if(tv){ $("plc").innerHTML=`Season <input id="ps" class="field" type="number" min="1" value="${(plays[id]||{}).season||1}" style="width:64px;margin:0"> Episode <input id="pe" class="field" type="number" min="1" value="${(plays[id]||{}).episode||1}" style="width:64px;margin:0"> <button class="secondary" id="pgo" style="border-radius:9px">Load</button>`; $("pgo").onclick=load; }
-  load();
+  const c=tv?curEp(id):{s:1,e:1};
+  const url=embedUrl(imdb,m,c.s,c.e);
+  if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
+  const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
+  f.setAttribute("allow","fullscreen; encrypted-media");
+  $("plv").textContent=""; $("plv").appendChild(f);
+  savePlay(id,c.s,c.e);
 }
 
 function render(){
@@ -390,9 +390,13 @@ async function savePlay(id,s,e){
   renderRecent();
 }
 function epBlock(m){
-  const c=curEp(m.id), n=epNotes[`${m.id}:${c.s}:${c.e}`]||{}, r=n.rating||0;
-  return `<h4 class="eph">Episode notes</h4>
+  const c=curEp(m.id), key=`${m.id}:${c.s}:${c.e}`, n=epNotes[key]||{}, r=n.rating||0, w=epWatched.has(key);
+  const list=[...epWatched].filter(k=>k.startsWith(m.id+":")).map(k=>k.split(":").slice(1).map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  return `<h4 class="eph">Episodes</h4>
    <div class="row">Season <input class="field mini" type="number" min="1" value="${c.s}" data-ep="s"> Episode <input class="field mini" type="number" min="1" value="${c.e}" data-ep="e"></div>
+   <button class="check ${w?"done":""}" data-ewatch="1">${w?`✓ S${c.s} E${c.e} watched (tap to undo)`:`Mark S${c.s} E${c.e} as watched`}</button>
+   <div class="row">Episode progress: <span>${list.length} episode${list.length===1?"":"s"} watched</span></div>
+   <div class="chips">${list.map(([s,e])=>`<span class="chip">S${s}·E${e}</span>`).join("")}</div>
    <div class="stars">${[1,2,3,4,5].map(i=>`<b class="st" data-estar="${i}" style="--f:${r>=i?100:r>=i-.5?50:0}%">★</b>`).join("")}</div>
    <div class="row">${r?r+" / 5 for S"+c.s+" E"+c.e:"Not rated · tap a star for this episode"}</div>
    <textarea class="field note" data-enote="1" rows="3" placeholder="Notes for S${c.s} E${c.e}…">${esc(n.notes||"")}</textarea>`;
@@ -436,6 +440,13 @@ document.addEventListener("click",async e=>{
   const gb=e.target.closest("[data-grp]");
   if(gb){ const arr=GR[gb.dataset.grp]||[]; const all=arr.every(m=>picked.has(m.id)); arr.forEach(m=>all?picked.delete(m.id):picked.add(m.id)); render(); return; }
   const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
+  const ew=e.target.closest("[data-ewatch]");
+  if(ew&&sel){ const c=curEp(sel), k=`${sel}:${c.s}:${c.e}`, was=epWatched.has(k);
+    was?epWatched.delete(k):epWatched.add(k); render();
+    const r=was?await sb.from("episode_watched").delete().eq("user_id",user.id).eq("movie_id",sel).eq("season",c.s).eq("episode",c.e)
+               :await sb.from("episode_watched").upsert({user_id:user.id,movie_id:sel,season:c.s,episode:c.e});
+    if(r.error){ was?epWatched.add(k):epWatched.delete(k); render(); alert("Couldn’t save: "+r.error.message); }
+    return; }
   const es=e.target.closest("[data-estar]");
   if(es&&sel){ const rc=es.getBoundingClientRect(), i=+es.dataset.estar, r=i-((e.clientX-rc.left)<rc.width/2?.5:0), c=curEp(sel);
     const cur=(epNotes[`${sel}:${c.s}:${c.e}`]||{}).rating; saveEp(sel,c.s,c.e,{rating:cur===r?null:r}); render(); return; }
