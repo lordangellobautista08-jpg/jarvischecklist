@@ -185,7 +185,7 @@ function thumb(m,big){
 }
 
 async function tmdb(m) {
-  if (tm[m.id]) return tm[m.id];
+  if (tm[m.id]?.p) return tm[m.id];
   if (!m.tmdb_id) return null;
 
   try {
@@ -217,17 +217,25 @@ async function tmdb(m) {
   }
 }
 
-const io="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(en=>{
-  if(!en.isIntersecting) return; io.unobserve(en.target);
-  const m=movies.find(x=>x.id==en.target.dataset.open);
-  if(m&&!m.custom_poster&&!tm[m.id]) tmdb(m).then(r=>{
-  if(r&&r.p&&!m.custom_poster){
-    const el=en.target.querySelector(".poster");
-    el.classList.add("has");
-    el.style.backgroundImage=`url(https://image.tmdb.org/t/p/w185${r.p})`;
-  }
-});
-}),{rootMargin:"200px"}):null;
+const io = "IntersectionObserver" in window
+  ? new IntersectionObserver(entries => {
+      entries.forEach(async en => {
+        if (!en.isIntersecting) return;
+
+        io.unobserve(en.target);
+
+        const m = movies.find(x => x.id == en.target.dataset.open);
+        if (!m || m.custom_poster || tm[m.id]) return;
+
+        const r = await tmdb(m);
+
+        if (r && r.p && !m.custom_poster) {
+          // Rebuild the cards so thumb() uses the newly cached poster.
+          render();
+        }
+      });
+    }, { rootMargin: "200px" })
+  : null;
 // ---- player: the link comes from the player_template setting in the database ----
 function embedUrl(imdb,m,se,ep){
   const tv=m&&m.kind==="series", t=(tv?settings.player_template_tv:settings.player_template)||"";
@@ -288,7 +296,7 @@ function render(){
   $("layout").classList.toggle("selmode",selMode); $("selmode").textContent=selMode?"Done selecting":"Select";
 if(io) document.querySelectorAll(".card").forEach(c=>{
   const m = movies.find(x => x.id == c.dataset.open);
-  if(m && m.tmdb_id && !m.custom_poster && !tm[m.id]) io.observe(c);
+  if(m && m.tmdb_id && !m.custom_poster && !tm[m.id]?.p) io.observe(c);
 });
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
