@@ -51,15 +51,7 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .ga{display:none;margin-left:10px;padding:3px 10px;font-size:11px}.selmode .ga{display:inline-block}.mini{width:64px;display:inline-block;margin:0 8px 0 4px;padding:6px 8px}.eph{margin:16px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .note{resize:vertical;font-size:13px;margin:8px 0 0}.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1a20;border:1px solid #4a4a54;border-radius:14px;padding:10px 14px;box-shadow:0 10px 40px #000c}
 .empty{color:var(--muted);text-align:center;padding:35px;border:1px dashed var(--line);border-radius:14px}
-#left,aside{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}aside,.prog{border:1px solid #383840;background:#15151a;border-radius:16px;padding:16px}
- .layout.open > aside{
-  height:calc(100vh - 32px);
-  max-height:calc(100vh - 32px);
-  overflow-y:auto;
-  overflow-x:hidden;
-  scrollbar-gutter:stable;
-  overscroll-behavior:contain;
-}
+#left{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}aside{position:sticky;top:16px;height:calc(100vh - 32px);overflow-y:scroll;overscroll-behavior:contain}aside,.prog{border:1px solid #383840;background:#15151a;border-radius:16px;padding:16px}
 aside .poster{aspect-ratio:16/10;border-radius:10px;margin-bottom:12px}aside .poster b{font-size:22px}
 aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.chip{border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:11px;color:#c9c9d1}.chip.g{color:var(--gold);border-color:#4a3a2a}
@@ -69,7 +61,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .check.done{border-color:#245b43;background:#13291f;color:#9be4ba}
 .x{float:right;background:none;border:0;color:var(--muted);font-size:20px;line-height:1}
 @media(max-width:900px){.dash{grid-template-columns:1fr}.layout,.layout.open{grid-template-columns:minmax(0,1fr)}#left{position:static;max-height:none;overflow:visible;order:-1}
- aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);max-height:84vh;overflow:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}.layout.open > aside{height:auto;max-height:84vh;overflow-y:auto}aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}}
+ aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);height:auto;max-height:84vh;overflow-y:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}}
 @media(max-width:560px){.grid{grid-template-columns:repeat(3,1fr);gap:9px}.poster b{font-size:11px}}
 </style>
 </head>
@@ -117,8 +109,6 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 <script>
 // Publishable key is safe in the browser. NEVER put a service-role/secret key here.
 const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-// Free TMDB API key (themoviedb.org → Settings → API). Leave "" to keep the generated posters.
-
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
@@ -160,111 +150,47 @@ const rkey=m=>m.release_date||`${m.release_year}-07-01`;
 const group=m=>m.phase||(["20th Century Fox","Sony Pictures"].includes(m.studio)?m.studio:"Other studios");
 const fmt=d=>d?new Date(d).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"}):"";
 
-
-function thumb(m, big) {
-  const s = (m.studio === "Marvel Studios" ? "MARVEL STUDIOS" : (m.studio || "").toUpperCase()) +
-    (m.kind && m.kind !== "movie" ? " · " + (KIND[m.kind] || m.kind).toUpperCase() : "");
-  const custom = (m.custom_poster || "").trim();
-  const p = tm[m.id] && tm[m.id].p;
-  const image = custom || (p ? `https://image.tmdb.org/t/p/${big ? "w342" : "w185"}${p}` : "");
-  return `<div class="poster ${image ? "has" : ""}" style="--c1:${hue(m.title)}" ${image ? `data-img="${esc(image)}"` : ""}>
-    <i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em></div>`;
+function thumb(m,big){
+  const s=(m.studio==="Marvel Studios"?"MARVEL STUDIOS":(m.studio||"").toUpperCase())+(m.kind&&m.kind!=="movie"?" · "+(KIND[m.kind]||m.kind).toUpperCase():"");
+  const custom=(m.custom_poster||"").trim(), p=tm[m.id]&&tm[m.id].p;
+  const image=custom||(p?`https://image.tmdb.org/t/p/${big?"w342":"w185"}${p}`:"");
+  return `<div class="poster ${image?"has":""}" style="--c1:${hue(m.title)}" ${image?`data-img="${esc(image)}"`:""}><i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em></div>`;
 }
+// Paints the poster pictures onto cards every time the page redraws them.
+function applyPosters(){document.querySelectorAll(".poster[data-img]").forEach(el=>{if(!el.style.backgroundImage)el.style.backgroundImage='url("'+el.dataset.img+'")';});}
+new MutationObserver(applyPosters).observe(document.body,{childList:true,subtree:true});
 
-// Puts the poster pictures on the cards every time the page redraws them.
-function applyPosters() {
-  document.querySelectorAll(".poster[data-img]").forEach(el => {
-    if (!el.style.backgroundImage) el.style.backgroundImage = 'url("' + el.dataset.img + '")';
-  });
-}
-new MutationObserver(applyPosters).observe(document.body, { childList: true, subtree: true });
-
-
-
-async function tmdb(m) {
-  if (tm[m.id]) return tm[m.id];
-  if (!m.tmdb_id) return null;
-
-  try {
-    const { data, error } = await sb.functions.invoke(
-      "tmdb-details",
-      {
-        body: {
-          tmdb_id: m.tmdb_id,
-          kind: ["series", "assembled"].includes(m.kind)
-            ? "series"
-            : "movie"
-        }
-      }
-    );
-
-    if (error) throw error;
-
-    tm[m.id] = {
-      id: data.id,
-      p: data.poster_path,
-      imdb: data.imdb_id
-    };
-
-    localStorage.setItem("frame_tmdb_v2", JSON.stringify(tm));
-
+async function tmdb(m){
+  if(tm[m.id]) return tm[m.id];
+  if(!m.tmdb_id) return null;
+  try{
+    const {data,error}=await sb.functions.invoke("tmdb-details",{body:{tmdb_id:m.tmdb_id,kind:["series","assembled"].includes(m.kind)?"series":"movie"}});
+    if(error) throw error;
+    tm[m.id]={id:data.id,p:data.poster_path,imdb:data.imdb_id};
+    localStorage.setItem("frame_tmdb_v2",JSON.stringify(tm));
     return tm[m.id];
-
-  } catch (err) {
-    console.error("TMDB poster error:", err);
-    return null;
-  }
+  }catch(err){console.error("TMDB poster error:",err);return null;}
 }
-
-
-const io = "IntersectionObserver" in window
-  ? new IntersectionObserver(entries => {
-      entries.forEach(async en => {
-        if (!en.isIntersecting) return;
-
-        io.unobserve(en.target);
-
-        const id = Number(en.target.dataset.open);
-        const m = movies.find(x => x.id === id);
-
-        if (!m || m.custom_poster || tm[m.id]) return;
-
-        const r = await tmdb(m);
-
-        if (r && r.p && !m.custom_poster) {
-          // Find the current card, even if the page was re-rendered.
-          const card = document.querySelector(
-            `.card[data-open="${m.id}"]`
-          );
-
-          if (card) {
-            const poster = card.querySelector(".poster");
-            poster.classList.add("has");
-            poster.style.backgroundImage =
-              `url(https://image.tmdb.org/t/p/w185${r.p})`;
-          }
-        }
-      });
-    }, { rootMargin: "200px" })
-  : null;
+const io="IntersectionObserver" in window?new IntersectionObserver(entries=>{
+  entries.forEach(async en=>{
+    if(!en.isIntersecting) return; io.unobserve(en.target);
+    const m=movies.find(x=>x.id===Number(en.target.dataset.open));
+    if(!m||m.custom_poster||tm[m.id]) return;
+    const r=await tmdb(m);
+    if(r&&r.p){const card=document.querySelector(`.card[data-open="${m.id}"]`), el=card&&card.querySelector(".poster");
+      if(el){el.classList.add("has"); el.dataset.img=`https://image.tmdb.org/t/p/w185${r.p}`; applyPosters();}}
+  });
+},{rootMargin:"200px"}):null;
 // ---- player: the link comes from the player_template setting in the database ----
 function embedUrl(imdb,m,se,ep){
   const tv=m&&m.kind==="series", t=(tv?settings.player_template_tv:settings.player_template)||"";
   if(!t.includes("{imdb_id}")||!/^tt\d{7,10}$/.test(imdb||"")) return null;
   const n=v=>String(Math.max(1,parseInt(v)||1));
   try{const u=new URL(t.replace("{imdb_id}",imdb).replace("{season}",n(se)).replace("{episode}",n(ep))); return u.protocol==="https:"?u.href:null;}catch{return null;}}
-
-async function imdbOf(m) {
-  if (m.imdb_id) return m.imdb_id;
-
-  const r = await tmdb(m);
-  if (!r || !r.id) return null;
-
-  if (r.imdb) return r.imdb;
-
-  return null;
+async function imdbOf(m){
+  if(m.imdb_id) return m.imdb_id;
+  const r=await tmdb(m); return r&&r.imdb?r.imdb:null;
 }
-
 async function play(id){
   const m=movies.find(x=>x.id===id); if(!m) return; const tv=m.kind==="series";
   $("plt").textContent=m.title; $("plc").innerHTML=""; $("pl").hidden=false; $("plv").textContent="Loading…";
@@ -275,7 +201,7 @@ async function play(id){
     const url=embedUrl(imdb,m,$("ps")&&$("ps").value,$("pe")&&$("pe").value);
     if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
     const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
-    f.setAttribute("allow","fullscreen; encrypted-media");
+    f.setAttribute("allow","fullscreen; encrypted-media"); f.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
     $("plv").textContent=""; $("plv").appendChild(f);
     savePlay(id,tv?Math.max(1,parseInt($("ps").value)||1):1,tv?Math.max(1,parseInt($("pe").value)||1):1);};
   if(tv){ $("plc").innerHTML=`Season <input id="ps" class="field" type="number" min="1" value="${(plays[id]||{}).season||1}" style="width:64px;margin:0"> Episode <input id="pe" class="field" type="number" min="1" value="${(plays[id]||{}).episode||1}" style="width:64px;margin:0"> <button class="secondary" id="pgo" style="border-radius:9px">Load</button>`; $("pgo").onclick=load; }
@@ -305,10 +231,7 @@ function render(){
    ||'<div class="empty">No movies match.</div>';
   renderSide(); renderProg();
   $("layout").classList.toggle("selmode",selMode); $("selmode").textContent=selMode?"Done selecting":"Select";
-if(io) document.querySelectorAll(".card").forEach(c=>{
-  const m = movies.find(x => x.id == c.dataset.open);
-  if(m && m.tmdb_id && !m.custom_poster && !tm[m.id]?.p) io.observe(c);
-});
+  if(io) document.querySelectorAll(".card").forEach(c=>{const m=movies.find(x=>x.id==c.dataset.open); if(m&&m.tmdb_id&&!m.custom_poster&&!(tm[m.id]&&tm[m.id].p)) io.observe(c);});
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
 function renderProg(){
@@ -368,7 +291,7 @@ function renderSide(){
    <div class="stars">${[1,2,3,4,5].map(i=>{const r=(notes[m.id]||{}).rating||0;return `<b class="st" data-star="${i}" style="--f:${r>=i?100:r>=i-.5?50:0}%">★</b>`}).join("")}</div>
    <div class="row">${(notes[m.id]||{}).rating?(notes[m.id].rating+" / 5 · tap the same star to clear"):"Not rated · tap a star (left half = half star)"}</div>
    <textarea class="field note" data-note="${m.id}" rows="4" placeholder="Your private notes…">${esc((notes[m.id]||{}).notes||"")}</textarea>${m.kind==="series"?epBlock(m):""}`;
- side.scrollTop=keep;
+  side.scrollTop=keep;
 }
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-id]");
