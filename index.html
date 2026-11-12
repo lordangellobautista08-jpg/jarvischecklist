@@ -184,8 +184,9 @@ function thumb(m,big){
   </div>`;
 }
 
+
 async function tmdb(m) {
-  if(m && m.tmdb_id && !m.custom_poster && !tm[m.id]) io.observe(c);
+  if (tm[m.id]) return tm[m.id];
   if (!m.tmdb_id) return null;
 
   try {
@@ -194,7 +195,9 @@ async function tmdb(m) {
       {
         body: {
           tmdb_id: m.tmdb_id,
-          kind: ["series", "assembled"].includes(m.kind) ? "series" : "movie"
+          kind: ["series", "assembled"].includes(m.kind)
+            ? "series"
+            : "movie"
         }
       }
     );
@@ -216,6 +219,7 @@ async function tmdb(m) {
     return null;
   }
 }
+
 
 const io = "IntersectionObserver" in window
   ? new IntersectionObserver(entries => {
