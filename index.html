@@ -183,7 +183,7 @@ async function play(id){
     const url=embedUrl(imdb,m,$("ps")&&$("ps").value,$("pe")&&$("pe").value);
     if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
     const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
-    f.setAttribute("allow","fullscreen; encrypted-media"); f.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
+    f.setAttribute("allow","fullscreen; encrypted-media");
     $("plv").textContent=""; $("plv").appendChild(f);};
   if(tv){ $("plc").innerHTML='Season <input id="ps" class="field" type="number" min="1" value="1" style="width:64px;margin:0"> Episode <input id="pe" class="field" type="number" min="1" value="1" style="width:64px;margin:0"> <button class="secondary" id="pgo" style="border-radius:9px">Load</button>'; $("pgo").onclick=load; }
   load();
