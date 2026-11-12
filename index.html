@@ -139,7 +139,7 @@ async function init(){
   fill("fFr",[...new Set(movies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
   fill("fPath",paths.map(p=>[p.slug,p.name]));
   const nn=name.toLowerCase().replace(/[^a-z]/g,"");
-  const special=/^(jai|jay|jaiane|jayane|jayan|jaian|yang|buyang)+$/.test(nn);   // add more name pieces here
+  const special=/^(jai|jay|jaiane|jayane|jayan|jaian|yang|buyang|jajajai)+$/.test(nn);   // add more name pieces here
   $("greet").textContent=`Welcome back, ${name}. Ready for your next Marvel movie?`+(special?" I love you ❤️":"");
   $("app").hidden=false; render();
 }
