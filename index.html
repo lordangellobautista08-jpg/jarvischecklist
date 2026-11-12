@@ -133,7 +133,7 @@ async function init(){
   user=session.user; $("who").hidden=false;
   const [p,m,pw,w,nt,st,en,pst]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
-    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,synopsis,studios(name),movie_franchises(franchises(name))"),
+    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,studios(name),movie_franchises(franchises(name))"),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
@@ -160,9 +160,29 @@ const rkey=m=>m.release_date||`${m.release_year}-07-01`;
 const group=m=>m.phase||(["20th Century Fox","Sony Pictures"].includes(m.studio)?m.studio:"Other studios");
 const fmt=d=>d?new Date(d).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"}):"";
 
-function thumb(m,big){const s=(m.studio==="Marvel Studios"?"MARVEL STUDIOS":m.studio.toUpperCase())+(m.kind&&m.kind!=="movie"?" · "+KIND[m.kind].toUpperCase():"");
-  const p=(tm[m.id]||{}).p, bg=p?`;background-image:url(https://image.tmdb.org/t/p/${big?"w342":"w185"}${p})`:"";
-  return `<div class="poster ${p?"has":""}" style="--c1:${hue(m.title)}${bg}"><i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em></div>`;}
+function thumb(m,big){
+  const s=(m.studio==="Marvel Studios"?"MARVEL STUDIOS":m.studio.toUpperCase())+
+    (m.kind&&m.kind!=="movie"?" · "+KIND[m.kind].toUpperCase():"");
+
+  const custom=(m.custom_poster||"").trim();
+  const p=(tm[m.id]||{}).p;
+
+  const image=custom
+    ? custom
+    : p
+      ? `https://image.tmdb.org/t/p/${big?"w342":"w185"}${p}`
+      : "";
+
+  const bg=image
+    ? `;background-image:url("${esc(image)}")`
+    : "";
+
+  return `<div class="poster ${image?"has":""}" style="--c1:${hue(m.title)}${bg}">
+    <i>${esc(s)}</i>
+    <b>${esc(m.title)}</b>
+    <em>${m.release_year}</em>
+  </div>`;
+}
 
 async function tmdb(m) {
   if (tm[m.id]) return tm[m.id];
@@ -174,7 +194,7 @@ async function tmdb(m) {
       {
         body: {
           tmdb_id: m.tmdb_id,
-          kind: m.kind === "series" ? "series" : "movie"
+          kind: ["series", "assembled"].includes(m.kind) ? "series" : "movie"
         }
       }
     );
@@ -200,7 +220,13 @@ async function tmdb(m) {
 const io="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(en=>{
   if(!en.isIntersecting) return; io.unobserve(en.target);
   const m=movies.find(x=>x.id==en.target.dataset.open);
-  if(m&&!tm[m.id]) tmdb(m).then(r=>{ if(r&&r.p){const el=en.target.querySelector(".poster"); el.classList.add("has"); el.style.backgroundImage=`url(https://image.tmdb.org/t/p/w185${r.p})`;} });
+  if(m&&!m.custom_poster&&!tm[m.id]) tmdb(m).then(r=>{
+  if(r&&r.p&&!m.custom_poster){
+    const el=en.target.querySelector(".poster");
+    el.classList.add("has");
+    el.style.backgroundImage=`url(https://image.tmdb.org/t/p/w185${r.p})`;
+  }
+});
 }),{rootMargin:"200px"}):null;
 // ---- player: the link comes from the player_template setting in the database ----
 function embedUrl(imdb,m,se,ep){
@@ -262,7 +288,7 @@ function render(){
   $("layout").classList.toggle("selmode",selMode); $("selmode").textContent=selMode?"Done selecting":"Select";
 if(io) document.querySelectorAll(".card").forEach(c=>{
   const m = movies.find(x => x.id == c.dataset.open);
-  if(m && m.tmdb_id && !tm[m.id]) io.observe(c);
+  if(m && m.tmdb_id && !m.custom_poster && !tm[m.id]) io.observe(c);
 });
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
