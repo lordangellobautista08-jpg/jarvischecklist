@@ -195,8 +195,8 @@ async function init(){
     sb.from("play_state")
   .select("movie_id,season,episode,last_played_at")
   .eq("user_id",user.id)
-  .order("last_played_at",{ascending:false})
-  .limit(3)]);
+  .order("last_played_at",{ascending:false,nullsFirst:false})
+  .limit(10)]);
   name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
   movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:x.movie_franchises.map(f=>f.franchises.name)}));
   (st.data||[]).forEach(r=>settings[r.key]=r.value);
@@ -312,8 +312,7 @@ renderRecent();
   if(io) document.querySelectorAll(".card").forEach(c=>{const m=movies.find(x=>x.id==c.dataset.open); if(m&&!m.custom_poster&&!tm[m.id]) io.observe(c);});
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
-function renderProg(){
- function renderRecent(){
+function renderRecent(){
   const recent=playHistory
     .map(r=>({r,m:movies.find(x=>x.id===r.movie_id)}))
     .filter(x=>x.m && x.m.kind!=="assembled")
@@ -338,12 +337,15 @@ function renderProg(){
     `;
   }).join("");
 }
+
+function renderProg(){
   const row=(n,w,t)=>`<div class="pr"><div><span>${esc(n)}</span><b>${w}/${t}</b></div><div class="track"><div class="fill" style="width:${t?Math.round(w/t*100):0}%"></div></div></div>`;
   const cnt=f=>{const a=movies.filter(f);return [a.filter(m=>watched.has(m.id)).length,a.length];};
   const ph=PHASES.map(p=>{const [w,t]=cnt(m=>m.phase===p);return t?row(p,w,t):""}).join("");
   const st=[...new Set(movies.map(m=>m.studio).filter(Boolean))].sort().map(s=>{const [w,t]=cnt(m=>m.studio===s);return row(s,w,t)}).join("");
   $("prog").innerHTML=`<div class="eyebrow">Progress</div><h4>MCU phases</h4>${ph}<h4>Studios</h4>${st}`;
 }
+
 async function saveNote(id,patch){
   const n={...(notes[id]||{}),...patch}; notes[id]=n;
   const {error}=await sb.from("movie_notes").upsert({user_id:user.id,movie_id:id,rating:n.rating??null,notes:n.notes||null,updated_at:new Date().toISOString()});
