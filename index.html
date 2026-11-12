@@ -6,47 +6,18 @@
 <meta name="theme-color" content="#09090b">
 <title>FRAME — Marvel Archive</title>
 <style>
- .recent-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:12px;
-  margin:12px 0 22px;
-}
-.recent-card{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  min-width:0;
-  padding:12px;
-  border:1px solid var(--line);
-  background:linear-gradient(145deg,#17171d,#101014);
-  border-radius:14px;
-}
-.recent-thumb{
-  width:58px;
-  flex:0 0 58px;
-  overflow:hidden;
-  border-radius:6px;
-}
-.recent-thumb .poster{
-  aspect-ratio:2/3;
-  padding:5px;
-}
+.recent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 22px}
+.recent-card{display:flex;align-items:center;gap:12px;min-width:0;padding:12px;border:1px solid var(--line);background:linear-gradient(145deg,#17171d,#101014);border-radius:14px}
+.recent-thumb{width:58px;flex:0 0 58px;overflow:hidden;border-radius:6px}
+.recent-thumb .poster{aspect-ratio:2/3;padding:5px}
 .recent-thumb .poster b{font-size:7px}
 .recent-thumb .poster i{font-size:5px}
 .recent-thumb .poster em{font-size:6px}
 .recent-info{min-width:0;flex:1}
-.recent-info b{
-  display:block;
-  font-size:12px;
-  line-height:1.3;
-  overflow-wrap:anywhere;
-}
+.recent-info b{display:block;font-size:12px;line-height:1.3;overflow-wrap:anywhere}
 .recent-info .muted{font-size:10px;margin:4px 0 8px}
 .recent-info button{width:100%;padding:7px;border-radius:7px}
-@media(max-width:900px){
-  .recent-grid{grid-template-columns:1fr}
-}
+@media(max-width:900px){.recent-grid{grid-template-columns:1fr}}
 :root{--bg:#09090b;--line:#292930;--muted:#92929d;--text:#f4f4f5;--red:#e62429;--gold:#e7bd72}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#2a1014 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 button,input,select{font:inherit}button{cursor:pointer}[hidden]{display:none!important}
@@ -70,7 +41,6 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .toolbar input,.toolbar select{background:#131318;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 12px;min-width:0}
 .toolbar input{flex:1;min-width:180px}
 .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:20px;align-items:start}.layout.open{grid-template-columns:250px minmax(0,1fr) 330px}
-
 .sec{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .sec h2{margin:0;font-size:15px;letter-spacing:.02em}.sec h2.mcu{color:var(--gold)}.sec span{color:var(--muted);font-size:11px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
@@ -126,10 +96,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
  <p class="muted" id="next"></p>
 
 <section id="recentSection" hidden>
-  <div class="sec">
-    <h2>Continue Watching</h2>
-    <span>Recently played · Up to 3</span>
-  </div>
+  <div class="sec"><h2>Continue Watching</h2><span>Recently played · Up to 3</span></div>
   <div class="recent-grid" id="recentList"></div>
 </section>
 
@@ -196,22 +163,16 @@ async function init(){
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
     sb.from("app_settings").select("key,value"),
     sb.from("episode_notes").select("movie_id,season,episode,rating,notes").eq("user_id",user.id),
-    sb.from("play_state")
-  .select("movie_id,season,episode,last_played_at")
-  .eq("user_id",user.id)
-  .order("last_played_at",{ascending:false,nullsFirst:false})
-  .limit(10),
-sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id)]);
+    sb.from("play_state").select("movie_id,season,episode,last_played_at").eq("user_id",user.id).order("last_played_at",{ascending:false,nullsFirst:false}).limit(10),
+    sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id)]);
   name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
   movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:x.movie_franchises.map(f=>f.franchises.name)}));
   (st.data||[]).forEach(r=>settings[r.key]=r.value);
   (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
   playHistory=pst.data||[];
- (ew.data||[]).forEach(r=>epWatched.add(${r.movie_id}:${r.season}:${r.episode}));
-playHistory.forEach(r=>{
-  plays[r.movie_id]={season:r.season,episode:r.episode};
-});
-paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
+  (ew.data||[]).forEach(r=>epWatched.add(`${r.movie_id}:${r.season}:${r.episode}`));
+  playHistory.forEach(r=>{ plays[r.movie_id]={season:r.season,episode:r.episode}; });
+  paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
   fill("fStudio",[...new Set(movies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
   fill("fFr",[...new Set(movies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
   fill("fPath",paths.map(p=>[p.slug,p.name]));
@@ -310,38 +271,20 @@ function render(){
    <div class="grid">${G[k].map(m=>`<article class="card ${watched.has(m.id)?"done":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`).join("")}</div></section>`).join("")
    ||'<div class="empty">No movies match.</div>';
   renderSide();
-renderProg();
-renderRecent();
+  renderProg();
+  renderRecent();
   $("layout").classList.toggle("selmode",selMode); $("selmode").textContent=selMode?"Done selecting":"Select";
   if(io) document.querySelectorAll(".card").forEach(c=>{const m=movies.find(x=>x.id==c.dataset.open); if(m&&!m.custom_poster&&!tm[m.id]) io.observe(c);});
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
 function renderRecent(){
-  const recent=playHistory
-    .map(r=>({r,m:movies.find(x=>x.id===r.movie_id)}))
-    .filter(x=>x.m && x.m.kind!=="assembled")
-    .slice(0,3);
-
+  const recent=playHistory.map(r=>({r,m:movies.find(x=>x.id===r.movie_id)})).filter(x=>x.m && x.m.kind!=="assembled").slice(0,3);
   $("recentSection").hidden=!recent.length;
-
   $("recentList").innerHTML=recent.map(({r,m})=>{
-    const progress=m.kind==="series"
-      ? `Season ${r.season} · Episode ${r.episode}`
-      : "Movie";
-
-    return `
-      <div class="recent-card">
-        <div class="recent-thumb">${thumb(m)}</div>
-        <div class="recent-info">
-          <b>${esc(m.title)}</b>
-          <div class="muted">${esc(String(m.release_year))} · ${progress}</div>
-          <button class="secondary" data-play="${m.id}">▶ Continue</button>
-        </div>
-      </div>
-    `;
+    const progress=m.kind==="series"?`Season ${r.season} · Episode ${r.episode}`:"Movie";
+    return `<div class="recent-card"><div class="recent-thumb">${thumb(m)}</div><div class="recent-info"><b>${esc(m.title)}</b><div class="muted">${esc(String(m.release_year))} · ${progress}</div><button class="secondary" data-play="${m.id}">▶ Continue</button></div></div>`;
   }).join("");
 }
-
 function renderProg(){
   const row=(n,w,t)=>`<div class="pr"><div><span>${esc(n)}</span><b>${w}/${t}</b></div><div class="track"><div class="fill" style="width:${t?Math.round(w/t*100):0}%"></div></div></div>`;
   const cnt=f=>{const a=movies.filter(f);return [a.filter(m=>watched.has(m.id)).length,a.length];};
@@ -349,7 +292,6 @@ function renderProg(){
   const st=[...new Set(movies.map(m=>m.studio).filter(Boolean))].sort().map(s=>{const [w,t]=cnt(m=>m.studio===s);return row(s,w,t)}).join("");
   $("prog").innerHTML=`<div class="eyebrow">Progress</div><h4>MCU phases</h4>${ph}<h4>Studios</h4>${st}`;
 }
-
 async function saveNote(id,patch){
   const n={...(notes[id]||{}),...patch}; notes[id]=n;
   const {error}=await sb.from("movie_notes").upsert({user_id:user.id,movie_id:id,rating:n.rating??null,notes:n.notes||null,updated_at:new Date().toISOString()});
@@ -363,29 +305,10 @@ async function saveEp(id,s,e,patch){
 }
 async function savePlay(id,s,e){
   const lastPlayedAt=new Date().toISOString();
-
   plays[id]={season:s,episode:e};
-
-  playHistory=[
-    {
-      movie_id:id,
-      season:s,
-      episode:e,
-      last_played_at:lastPlayedAt
-    },
-    ...playHistory.filter(r=>r.movie_id!==id)
-  ].slice(0,3);
-
-  const {error}=await sb.from("play_state").upsert({
-    user_id:user.id,
-    movie_id:id,
-    season:s,
-    episode:e,
-    last_played_at:lastPlayedAt
-  });
-
+  playHistory=[{movie_id:id,season:s,episode:e,last_played_at:lastPlayedAt},...playHistory.filter(r=>r.movie_id!==id)].slice(0,3);
+  const {error}=await sb.from("play_state").upsert({user_id:user.id,movie_id:id,season:s,episode:e,last_played_at:lastPlayedAt});
   if(error) console.warn(error.message);
-
   renderSide();
   renderRecent();
 }
@@ -408,7 +331,6 @@ async function bulk(mark){
   const r=mark?(add.length?await sb.from("watch_progress").upsert(add.map(movie_id=>({user_id:user.id,movie_id}))):{}):await sb.from("watch_progress").delete().eq("user_id",user.id).in("movie_id",ids);
   if(r.error){ watched=before; render(); alert("Couldn’t save: "+r.error.message); }
 }
-
 function renderSide(){
   const m=movies.find(x=>x.id===sel), side=$("side"), keep=side.scrollTop;
   $("layout").classList.toggle("open",!!m); side.hidden=!m; if(!m) return;
@@ -465,7 +387,8 @@ $("ba").onclick=()=>{LAST.forEach(m=>picked.add(m.id));render();};
 $("bw").onclick=()=>bulk(true);$("bu").onclick=()=>bulk(false);$("bc").onclick=()=>{picked.clear();render();};
 document.addEventListener("change",e=>{
   if(e.target.closest("[data-ep]")&&sel){ const sd=$("side"), v=k=>Math.max(1,parseInt(sd.querySelector(`[data-ep="${k}"]`).value)||1); epSel[sel]={s:v("s"),e:v("e")}; render(); return; }
-  if(e.target.closest("[data-enote]")&&sel){ const c=curEp(sel); saveEp(sel,c.s,c.e,{notes:e.target.value}); return; }const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
+  if(e.target.closest("[data-enote]")&&sel){ const c=curEp(sel); saveEp(sel,c.s,c.e,{notes:e.target.value}); return; }
+  const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
 $("out").onclick=async()=>{await sb.auth.signOut();location.reload();};
 $("send").onclick=async()=>{
   const email=$("email").value.trim(); if(!email) return;
