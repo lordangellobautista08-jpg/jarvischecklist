@@ -18,15 +18,15 @@
 .recent-info .muted{font-size:10px;margin:4px 0 8px}
 .recent-info button{width:100%;padding:7px;border-radius:7px}
 @media(max-width:900px){.recent-grid{grid-template-columns:1fr}}
-:root{--bg:#09090b;--line:#292930;--muted:#92929d;--text:#f4f4f5;--red:#e62429;--gold:#e7bd72}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#2a1014 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+:root{--bg:#09090b;--line:#292930;--muted:#92929d;--text:#f4f4f5;--red:#e62429;--red2:#f06a6e;--red3:#f17c80;--glow:#2a1014;--gold:#e7bd72}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,var(--glow) 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 button,input,select{font:inherit}button{cursor:pointer}[hidden]{display:none!important}
 .wrap{max-width:1280px;margin:auto;padding:24px 20px 60px}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:30px}
 .brand{font-weight:850;letter-spacing:.16em;font-size:13px}.brand b{color:var(--red)}
 .pill,.secondary{border:1px solid var(--line);background:#141418;border-radius:999px;padding:8px 14px;color:#d6d6dc;font-size:12px}
 .primary{border:0;background:var(--red);color:#fff;font-weight:800;padding:11px 16px;border-radius:9px;width:100%}
-.eyebrow{color:#f17c80;text-transform:uppercase;letter-spacing:.19em;font-size:10px;font-weight:800}
+.eyebrow{color:var(--red3);text-transform:uppercase;letter-spacing:.19em;font-size:10px;font-weight:800}
 h1{font-size:clamp(28px,4.5vw,44px);line-height:1.05;letter-spacing:-.05em;margin:10px 0 8px}
 .muted{color:var(--muted);font-size:13px}
 .login{max-width:400px;margin:12vh auto;background:#17171d;border:1px solid #383840;border-radius:18px;padding:24px}
@@ -35,7 +35,7 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .dash{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
 .box{border:1px solid var(--line);background:linear-gradient(145deg,#17171d,#101014);border-radius:16px;padding:16px}
 .big{font-size:30px;font-weight:800;letter-spacing:-.05em}
-.track{height:6px;border-radius:99px;background:#303038;overflow:hidden;margin-top:10px}.fill{height:100%;background:linear-gradient(90deg,var(--red),#f06a6e);width:0;transition:width .25s}
+.track{height:6px;border-radius:99px;background:#303038;overflow:hidden;margin-top:10px}.fill{height:100%;background:linear-gradient(90deg,var(--red),var(--red2));width:0;transition:width .25s}
 .path{cursor:pointer;border-color:#4a3a2a}.path:hover{border-color:var(--gold)}.path h3{margin:0 0 4px;font-size:15px;color:var(--gold)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 6px}
 .toolbar input,.toolbar select{background:#131318;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 12px;min-width:0}
@@ -53,7 +53,7 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .poster em{position:relative;font-style:normal;font-size:9px;color:#ffffffb0;margin-top:5px}
 .card{position:relative}.done .poster{filter:brightness(.4) saturate(.6)}.done:after{content:"✓";position:absolute;top:6px;right:8px;color:#9be4ba;font-size:15px;font-weight:900;text-shadow:0 1px 6px #000}.done{border-color:#245b43}
 .circ{display:none;position:absolute;top:8px;left:8px;z-index:2;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#0008}.selmode .circ{display:block}.pick .circ{background:var(--red);border-color:var(--red);box-shadow:inset 0 0 0 3px #0009}.pick{border-color:var(--red)}
-.pr{margin:9px 0;font-size:12px}.pr>div:first-child{display:flex;justify-content:space-between}.pr b{color:var(--gold);font-weight:700}.pr .track{margin-top:5px;height:4px}.prog h4{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.pr{margin:9px 0;font-size:12px}.pr.go{cursor:pointer;border-radius:8px;padding:4px 6px;margin:5px -6px}.pr.go:hover{background:#ffffff0d}.pr>div:first-child{display:flex;justify-content:space-between}.pr b{color:var(--gold);font-weight:700}.pr .track{margin-top:5px;height:4px}.prog h4{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .stars{display:flex;gap:2px;margin:14px 0 4px}.st{font-size:26px;line-height:1;cursor:pointer;background:linear-gradient(90deg,var(--gold) var(--f),#3a3a43 var(--f));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .pimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:1}
 .play{width:100%;margin-top:8px;border:0;background:var(--red);color:#fff;font-weight:800;padding:10px;border-radius:9px}
@@ -148,6 +148,17 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Marvel Television","Other studios"];
+const THEMES={"road-to-endgame":{r:"#8b5cf6",r2:"#a78bfa",r3:"#c4b5fd",g:"#1d1233"},"road-to-doomsday":{r:"#22a35a",r2:"#4ade80",r3:"#86efac",g:"#0f2a1a"}};
+function applyTheme(){
+  const t=THEMES[$("fPath").value]||{r:"#e62429",r2:"#f06a6e",r3:"#f17c80",g:"#2a1014"}, st=document.documentElement.style;
+  st.setProperty("--red",t.r); st.setProperty("--red2",t.r2); st.setProperty("--red3",t.r3); st.setProperty("--glow",t.g);
+}
+function goSection(k){
+  const find=()=>[...document.querySelectorAll("section[data-sec]")].find(x=>x.dataset.sec===k);
+  let el=find();
+  if(!el){ ["q","fKind","fStudio","fPhase","fFr","fPath","fStat"].forEach(i=>$(i).value=""); $("sort").value="r"; render(); el=find(); }
+  if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+}
 let epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
 
 async function init(){
@@ -245,6 +256,7 @@ async function play(id){
 }
 
 function render(){
+  applyTheme();
   const total=movies.length,done=movies.filter(m=>watched.has(m.id)).length,pct=total?Math.round(done/total*100):0;
   $("pct").textContent=pct+"%";$("cnt").textContent=`${done} / ${total} watched`;$("bar").style.width=pct+"%";
   [["road-to-endgame","p1","b1"],["road-to-doomsday","p2","b2"]].forEach(([s,t,b])=>{
@@ -267,7 +279,7 @@ function render(){
   list.sort(cmp);
   GR={}; LAST=list; const G=GR; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
   const keys=Object.keys(G).sort((a,b)=>{const f=k=>k.startsWith("MCU")?-1:ORDER.indexOf(k);return f(a)-f(b);});
-  $("list").innerHTML=keys.map(k=>`<section><div class="sec"><h2 class="${PHASES.includes(k)||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${G[k].filter(m=>watched.has(m.id)).length} / ${G[k].length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
+  $("list").innerHTML=keys.map(k=>`<section data-sec="${esc(k)}"><div class="sec"><h2 class="${PHASES.includes(k)||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${G[k].filter(m=>watched.has(m.id)).length} / ${G[k].length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
    <div class="grid">${G[k].map(m=>`<article class="card ${watched.has(m.id)?"done":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`).join("")}</div></section>`).join("")
    ||'<div class="empty">No movies match.</div>';
   renderSide();
@@ -286,10 +298,10 @@ function renderRecent(){
   }).join("");
 }
 function renderProg(){
-  const row=(n,w,t)=>`<div class="pr"><div><span>${esc(n)}</span><b>${w}/${t}</b></div><div class="track"><div class="fill" style="width:${t?Math.round(w/t*100):0}%"></div></div></div>`;
+  const row=(n,w,t,g)=>`<div class="pr go" data-goto="${esc(g||n)}"><div><span>${esc(n)}</span><b>${w}/${t}</b></div><div class="track"><div class="fill" style="width:${t?Math.round(w/t*100):0}%"></div></div></div>`;
   const cnt=f=>{const a=movies.filter(f);return [a.filter(m=>watched.has(m.id)).length,a.length];};
   const ph=PHASES.map(p=>{const [w,t]=cnt(m=>m.phase===p);return t?row(p,w,t):""}).join("");
-  const st=[...new Set(movies.map(m=>m.studio).filter(Boolean))].sort().map(s=>{const [w,t]=cnt(m=>m.studio===s);return row(s,w,t)}).join("");
+  const st=[...new Set(movies.map(m=>m.studio).filter(Boolean))].sort().map(s=>{const [w,t]=cnt(m=>m.studio===s);return row(s,w,t,s==="Marvel Studios"?"Phase One":["20th Century Fox","Sony Pictures","Marvel Television"].includes(s)?s:"Other studios")}).join("");
   $("prog").innerHTML=`<div class="eyebrow">Progress</div><h4>MCU phases</h4>${ph}<h4>Studios</h4>${st}`;
 }
 async function saveNote(id,patch){
@@ -352,6 +364,7 @@ function renderSide(){
   side.scrollTop=keep;
 }
 document.addEventListener("click",async e=>{
+  const gt=e.target.closest("[data-goto]"); if(gt){ goSection(gt.dataset.goto); return; }
   const b=e.target.closest("[data-id]");
   if(b){ const id=+b.dataset.id, was=watched.has(id);
     was?watched.delete(id):watched.add(id); render();               // optimistic
