@@ -69,7 +69,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .check.done{border-color:#245b43;background:#13291f;color:#9be4ba}
 .x{float:right;background:none;border:0;color:var(--muted);font-size:20px;line-height:1}
 @media(max-width:900px){.dash{grid-template-columns:1fr}.layout,.layout.open{grid-template-columns:minmax(0,1fr)}#left{position:static;max-height:none;overflow:visible;order:-1}
- aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);max-height:84vh;overflow:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}}
+ aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);max-height:84vh;overflow:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}.layout.open > aside{height:auto;max-height:84vh;overflow-y:auto}aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}}
 @media(max-width:560px){.grid{grid-template-columns:repeat(3,1fr);gap:9px}.poster b{font-size:11px}}
 </style>
 </head>
@@ -179,7 +179,7 @@ function thumb(m, big) {
       : "";
 
   const bg = image
-    ? `;background-image:url("${esc(image)}")`
+    ? `;background-image:url('${esc(image)}')`
     : "";
 
   return `<div class="poster ${image ? "has" : ""}" style="--c1:${hue(m.title)}${bg}">
@@ -361,7 +361,7 @@ async function bulk(mark){
 }
 
 function renderSide(){
-  const m=movies.find(x=>x.id===sel), side=$("side");
+  const m=movies.find(x=>x.id===sel), side=$("side"), keep=side.scrollTop;
   $("layout").classList.toggle("open",!!m); side.hidden=!m; if(!m) return;
   const d=watched.has(m.id), ps=paths.map(p=>{const x=p.pathway_movies.find(x=>x.movie_id===m.id);return x?`${p.name} · ${x.viewing_type}`:null}).filter(Boolean);
   side.innerHTML=`<button class="x" data-close="1" aria-label="Close">×</button>${thumb(m,1)}
@@ -378,6 +378,7 @@ function renderSide(){
    <div class="stars">${[1,2,3,4,5].map(i=>{const r=(notes[m.id]||{}).rating||0;return `<b class="st" data-star="${i}" style="--f:${r>=i?100:r>=i-.5?50:0}%">★</b>`}).join("")}</div>
    <div class="row">${(notes[m.id]||{}).rating?(notes[m.id].rating+" / 5 · tap the same star to clear"):"Not rated · tap a star (left half = half star)"}</div>
    <textarea class="field note" data-note="${m.id}" rows="4" placeholder="Your private notes…">${esc((notes[m.id]||{}).notes||"")}</textarea>${m.kind==="series"?epBlock(m):""}`;
+ side.scrollTop=keep;
 }
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-id]");
