@@ -188,7 +188,7 @@ async function play(id){
     const url=embedUrl(imdb,m,$("ps")&&$("ps").value,$("pe")&&$("pe").value);
     if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
     const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
-    f.setAttribute("allow","fullscreen; encrypted-media"); f.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
+    f.setAttribute("allow","fullscreen; encrypted-media");
     $("plv").textContent=""; $("plv").appendChild(f);
     savePlay(id,tv?Math.max(1,parseInt($("ps").value)||1):1,tv?Math.max(1,parseInt($("pe").value)||1):1);};
   if(tv){ $("plc").innerHTML=`Season <input id="ps" class="field" type="number" min="1" value="${(plays[id]||{}).season||1}" style="width:64px;margin:0"> Episode <input id="pe" class="field" type="number" min="1" value="${(plays[id]||{}).episode||1}" style="width:64px;margin:0"> <button class="secondary" id="pgo" style="border-radius:9px">Load</button>`; $("pgo").onclick=load; }
