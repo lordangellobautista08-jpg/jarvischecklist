@@ -118,13 +118,13 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 // Publishable key is safe in the browser. NEVER put a service-role/secret key here.
 const sb = supabase.createClient("https://nwdlrcmcwnifduydomgf.supabase.co","sb_publishable_MlptRCYUuS_2qfOUTAEm9w_2v5nTs9O",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 // Free TMDB API key (themoviedb.org → Settings → API). Leave "" to keep the generated posters.
-const TMDB_KEY="";
+
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Other studios"];
-let GR={},LAST=[],epNotes={},plays={},epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v1")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
+let GR={},LAST=[],epNotes={},plays={},epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v2")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
@@ -133,7 +133,7 @@ async function init(){
   user=session.user; $("who").hidden=false;
   const [p,m,pw,w,nt,st,en,pst]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
-    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,synopsis,studios(name),movie_franchises(franchises(name))"),
+    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,synopsis,studios(name),movie_franchises(franchises(name))"),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
@@ -163,13 +163,40 @@ const fmt=d=>d?new Date(d).toLocaleDateString("en-US",{year:"numeric",month:"lon
 function thumb(m,big){const s=(m.studio==="Marvel Studios"?"MARVEL STUDIOS":m.studio.toUpperCase())+(m.kind&&m.kind!=="movie"?" · "+KIND[m.kind].toUpperCase():"");
   const p=(tm[m.id]||{}).p, bg=p?`;background-image:url(https://image.tmdb.org/t/p/${big?"w342":"w185"}${p})`:"";
   return `<div class="poster ${p?"has":""}" style="--c1:${hue(m.title)}${bg}"><i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em></div>`;}
-async function tmdb(m){
-  if(tm[m.id]) return tm[m.id]; if(!TMDB_KEY) return null;
-  const tv=m.kind==="series", q=encodeURIComponent(m.title.replace(/^Marvel One-Shot: |^Marvel Studios: Assembled – /,""));
-  try{const r=await (await fetch(`https://api.themoviedb.org/3/search/${tv?"tv":"movie"}?api_key=${TMDB_KEY}&query=${q}&${tv?"first_air_date_year":"primary_release_year"}=${m.release_year}`)).json();
-    const x=r.results&&r.results[0]; tm[m.id]=x?{id:x.id,p:x.poster_path}:{id:null,p:null};
-    localStorage.setItem("frame_tmdb_v1",JSON.stringify(tm)); return tm[m.id];}catch{return null;}
+
+async function tmdb(m) {
+  if (tm[m.id]) return tm[m.id];
+  if (!m.tmdb_id) return null;
+
+  try {
+    const { data, error } = await sb.functions.invoke(
+      "tmdb-details",
+      {
+        body: {
+          tmdb_id: m.tmdb_id,
+          kind: m.kind === "series" ? "series" : "movie"
+        }
+      }
+    );
+
+    if (error) throw error;
+
+    tm[m.id] = {
+      id: data.id,
+      p: data.poster_path,
+      imdb: data.imdb_id
+    };
+
+    localStorage.setItem("frame_tmdb_v2", JSON.stringify(tm));
+
+    return tm[m.id];
+
+  } catch (err) {
+    console.error("TMDB poster error:", err);
+    return null;
+  }
 }
+
 const io="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(en=>{
   if(!en.isIntersecting) return; io.unobserve(en.target);
   const m=movies.find(x=>x.id==en.target.dataset.open);
@@ -181,11 +208,18 @@ function embedUrl(imdb,m,se,ep){
   if(!t.includes("{imdb_id}")||!/^tt\d{7,10}$/.test(imdb||"")) return null;
   const n=v=>String(Math.max(1,parseInt(v)||1));
   try{const u=new URL(t.replace("{imdb_id}",imdb).replace("{season}",n(se)).replace("{episode}",n(ep))); return u.protocol==="https:"?u.href:null;}catch{return null;}}
-async function imdbOf(m){
-  if(m.imdb_id) return m.imdb_id;
-  const r=await tmdb(m); if(!r||!r.id) return null; if(r.imdb) return r.imdb;
-  try{const j=await (await fetch(`https://api.themoviedb.org/3/${m.kind==="series"?"tv":"movie"}/${r.id}/external_ids?api_key=${TMDB_KEY}`)).json();
-    r.imdb=j.imdb_id||null; localStorage.setItem("frame_tmdb_v1",JSON.stringify(tm)); return r.imdb;}catch{return null;}}
+
+async function imdbOf(m) {
+  if (m.imdb_id) return m.imdb_id;
+
+  const r = await tmdb(m);
+  if (!r || !r.id) return null;
+
+  if (r.imdb) return r.imdb;
+
+  return null;
+}
+
 async function play(id){
   const m=movies.find(x=>x.id===id); if(!m) return; const tv=m.kind==="series";
   $("plt").textContent=m.title; $("plc").innerHTML=""; $("pl").hidden=false; $("plv").textContent="Loading…";
@@ -226,7 +260,10 @@ function render(){
    ||'<div class="empty">No movies match.</div>';
   renderSide(); renderProg();
   $("layout").classList.toggle("selmode",selMode); $("selmode").textContent=selMode?"Done selecting":"Select";
-  if(TMDB_KEY&&io) document.querySelectorAll(".card").forEach(c=>{ if(!tm[c.dataset.open]) io.observe(c); });
+if(io) document.querySelectorAll(".card").forEach(c=>{
+  const m = movies.find(x => x.id == c.dataset.open);
+  if(m && m.tmdb_id && !tm[m.id]) io.observe(c);
+});
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
 function renderProg(){
