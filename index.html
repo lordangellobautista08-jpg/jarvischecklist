@@ -160,29 +160,35 @@ const rkey=m=>m.release_date||`${m.release_year}-07-01`;
 const group=m=>m.phase||(["20th Century Fox","Sony Pictures"].includes(m.studio)?m.studio:"Other studios");
 const fmt=d=>d?new Date(d).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"}):"";
 
-function thumb(m,big){
-  const s=(m.studio==="Marvel Studios"?"MARVEL STUDIOS":m.studio.toUpperCase())+
-    (m.kind&&m.kind!=="movie"?" · "+KIND[m.kind].toUpperCase():"");
 
-  const custom=(m.custom_poster||"").trim();
-  const p=(tm[m.id]||{}).p;
+function thumb(m, big) {
+  const s = (m.studio === "Marvel Studios"
+    ? "MARVEL STUDIOS"
+    : (m.studio || "").toUpperCase()) +
+    (m.kind && m.kind !== "movie"
+      ? " · " + (KIND[m.kind] || m.kind).toUpperCase()
+      : "");
 
-  const image=custom
+  const custom = (m.custom_poster || "").trim();
+  const p = tm[m.id]?.p || "";
+
+  const image = custom
     ? custom
     : p
-      ? `https://image.tmdb.org/t/p/${big?"w342":"w185"}${p}`
+      ? `https://image.tmdb.org/t/p/${big ? "w342" : "w185"}${p}`
       : "";
 
-  const bg=image
+  const bg = image
     ? `;background-image:url("${esc(image)}")`
     : "";
 
-  return `<div class="poster ${image?"has":""}" style="--c1:${hue(m.title)}${bg}">
+  return `<div class="poster ${image ? "has" : ""}" style="--c1:${hue(m.title)}${bg}">
     <i>${esc(s)}</i>
     <b>${esc(m.title)}</b>
     <em>${m.release_year}</em>
   </div>`;
 }
+
 
 
 async function tmdb(m) {
