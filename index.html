@@ -6,25 +6,16 @@
 <meta name="theme-color" content="#09090b">
 <title>FRAME — Marvel Archive</title>
 <style>
-.recent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 22px}
-.recent-card{display:flex;align-items:center;gap:12px;min-width:0;padding:12px;border:1px solid var(--line);background:linear-gradient(145deg,#17171d,#101014);border-radius:14px}
-.recent-thumb{width:58px;flex:0 0 58px;overflow:hidden;border-radius:6px}
-.recent-thumb .poster{aspect-ratio:2/3;padding:5px}
-.recent-thumb .poster b{font-size:7px}
-.recent-thumb .poster i{font-size:5px}
-.recent-thumb .poster em{font-size:6px}
-.recent-info{min-width:0;flex:1}
-.recent-info b{display:block;font-size:12px;line-height:1.3;overflow-wrap:anywhere}
-.recent-info .muted{font-size:10px;margin:4px 0 8px}
-.recent-info button{width:100%;padding:7px;border-radius:7px}
-@media(max-width:900px){.recent-grid{grid-template-columns:1fr}}
 :root{--bg:#09090b;--line:#292930;--muted:#92929d;--text:#f4f4f5;--red:#e62429;--red2:#f06a6e;--red3:#f17c80;--glow:#2a1014;--gold:#e7bd72}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,var(--glow) 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 button,input,select{font:inherit}button{cursor:pointer}[hidden]{display:none!important}
 .wrap{max-width:1280px;margin:auto;padding:24px 20px 60px}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:30px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:26px}
+.hl{display:flex;align-items:center;gap:12px}
 .brand{font-weight:850;letter-spacing:.16em;font-size:13px}.brand b{color:var(--red)}
+.burger{display:none;place-items:center;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#141418;color:var(--text);font-size:20px;line-height:1;padding:0}
 .pill,.secondary{border:1px solid var(--line);background:#141418;border-radius:999px;padding:8px 14px;color:#d6d6dc;font-size:12px}
+.pill.on{border-color:var(--red);color:var(--text)}
 .primary{border:0;background:var(--red);color:#fff;font-weight:800;padding:11px 16px;border-radius:9px;width:100%}
 .eyebrow{color:var(--red3);text-transform:uppercase;letter-spacing:.19em;font-size:10px;font-weight:800}
 h1{font-size:clamp(28px,4.5vw,44px);line-height:1.05;letter-spacing:-.05em;margin:10px 0 8px}
@@ -32,14 +23,44 @@ h1{font-size:clamp(28px,4.5vw,44px);line-height:1.05;letter-spacing:-.05em;margi
 .login{max-width:400px;margin:12vh auto;background:#17171d;border:1px solid #383840;border-radius:18px;padding:24px}
 .field{width:100%;padding:11px 12px;background:#0d0d11;border:1px solid #34343c;border-radius:9px;color:#fff;margin:6px 0 12px}
 label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
-.dash{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+
+/* Continue watching: big tile + two stacked tiles */
+.rgrid{display:grid;gap:10px;max-width:640px;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;aspect-ratio:2/1;margin:12px 0 18px}
+.rgrid .rt1{grid-row:1/3}
+.rgrid.n1{grid-template-columns:1fr;grid-template-rows:1fr;aspect-ratio:2/1}
+.rgrid.n2{grid-template-rows:1fr}.rgrid.n2 .rt1{grid-row:auto}
+.rt{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--line);cursor:pointer;min-width:0;background:#121216}
+.rt:hover{border-color:#56515a}
+.rt .poster{position:absolute;inset:0;aspect-ratio:auto;padding:0;border-radius:0}
+.rt .poster:before,.rt .poster i,.rt .poster b,.rt .poster em{display:none}
+.rinfo{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:26px 10px 8px;background:linear-gradient(180deg,transparent,#000e);display:flex;flex-direction:column;gap:1px}
+.rinfo b{font-size:13px;line-height:1.2;overflow-wrap:anywhere}.rinfo span{font-size:10px;color:#c9c9d1}.rinfo em{font-style:normal;font-size:10px;color:var(--red3);font-weight:700}
+.rt2 .rinfo,.rt3 .rinfo{padding-top:16px}.rt2 .rinfo b,.rt3 .rinfo b{font-size:11px}.rt2 .rinfo em,.rt3 .rinfo em{display:none}
+
+/* Up next banner */
+.nbanner{position:relative;display:flex;align-items:center;height:104px;border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid var(--bc,#4a3a2a);margin:0 0 6px}
+.nb-img{position:absolute;left:0;top:0;bottom:0;width:36%;height:100%;object-fit:cover;object-position:center top;-webkit-mask-image:linear-gradient(90deg,#000 55%,transparent 100%);mask-image:linear-gradient(90deg,#000 55%,transparent 100%)}
+.nb-txt{position:relative;margin-left:38%;padding:8px 14px 8px 4px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.nb-k{font-size:10px;letter-spacing:.18em;font-weight:800;color:#ffffffb8}
+.nb-txt b{font-size:17px;line-height:1.2;letter-spacing:-.02em;overflow-wrap:anywhere}
+.nb-s{font-size:11px;color:#ffffffc8}
+
+.dash{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
 .box{border:1px solid var(--line);background:linear-gradient(145deg,#17171d,#101014);border-radius:16px;padding:16px}
 .big{font-size:30px;font-weight:800;letter-spacing:-.05em}
 .track{height:6px;border-radius:99px;background:#303038;overflow:hidden;margin-top:10px}.fill{height:100%;background:linear-gradient(90deg,var(--red),var(--red2));width:0;transition:width .25s}
-.path{cursor:pointer;border-color:#4a3a2a}.path:hover{border-color:var(--gold)}.path h3{margin:0 0 4px;font-size:15px;color:var(--gold)}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 6px}
-.toolbar input,.toolbar select{background:#131318;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 12px;min-width:0}
-.toolbar input{flex:1;min-width:180px}
+.path{cursor:pointer;border-color:#4a3a2a}.path:hover{border-color:var(--gold)}.path.on{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}.path h3{margin:0 0 4px;font-size:15px;color:var(--gold)}
+
+/* mode tabs, search, filters */
+.modes{display:flex;gap:4px;margin:16px 0 10px;border-bottom:1px solid var(--line)}
+.modes button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 14px;font-size:14px;font-weight:650}
+.modes button.on{color:var(--text);border-bottom-color:var(--red)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 6px;align-items:center}
+.toolbar input{flex:1;min-width:150px;background:#131318;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 12px}
+.fpanel{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;background:#101014;border:1px solid var(--line);border-radius:14px;padding:14px;margin:8px 0}
+.fl{display:flex;flex-direction:column;gap:4px;font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.fl select{background:#131318;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 10px;min-width:0;text-transform:none;letter-spacing:0;font-size:13px}
+
 .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:20px;align-items:start}.layout.open{grid-template-columns:250px minmax(0,1fr) 330px}
 .sec{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .sec h2{margin:0;font-size:15px;letter-spacing:.02em}.sec h2.mcu{color:var(--gold)}.sec span{color:var(--muted);font-size:11px}
@@ -54,10 +75,11 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .card{position:relative}.done .poster{filter:brightness(.4) saturate(.6)}.done:after{content:"✓";position:absolute;top:6px;right:8px;color:#9be4ba;font-size:15px;font-weight:900;text-shadow:0 1px 6px #000}.done{border-color:#245b43}
 .circ{display:none;position:absolute;top:8px;left:8px;z-index:2;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#0008}.selmode .circ{display:block}.pick .circ{background:var(--red);border-color:var(--red);box-shadow:inset 0 0 0 3px #0009}.pick{border-color:var(--red)}
 .pr{margin:9px 0;font-size:12px}.pr.go{cursor:pointer;border-radius:8px;padding:4px 6px;margin:5px -6px}.pr.go:hover{background:#ffffff0d}.pr>div:first-child{display:flex;justify-content:space-between}.pr b{color:var(--gold);font-weight:700}.pr .track{margin-top:5px;height:4px}.prog h4{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.tmn{font-size:10px;margin-top:16px;color:var(--muted)}
 .stars{display:flex;gap:2px;margin:14px 0 4px}.st{font-size:26px;line-height:1;cursor:pointer;background:linear-gradient(90deg,var(--gold) var(--f),#3a3a43 var(--f));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .pimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:1}
 .play{width:100%;margin-top:8px;border:0;background:var(--red);color:#fff;font-weight:800;padding:10px;border-radius:9px}
-.pl{position:fixed;inset:0;background:#000e;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}.plbox{width:min(1000px,100%)}@media(max-width:900px){.plbox{width:min(92vw,calc((100dvh - 90px)*16/9))}}@media(max-height:500px){.plbox{width:min(80vw,calc((100dvh - 70px)*16/9))}.pl p{display:none}}.plbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.pl{position:fixed;inset:0;background:#000e;z-index:70;display:flex;align-items:center;justify-content:center;padding:14px}.plbox{width:min(1000px,100%)}@media(max-width:900px){.plbox{width:min(92vw,calc((100dvh - 90px)*16/9))}}@media(max-height:500px){.plbox{width:min(80vw,calc((100dvh - 70px)*16/9))}.pl p{display:none}}.plbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .plv{aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;place-items:center;color:var(--muted);text-align:center;padding:14px}.plv iframe{width:100%;height:100%;border:0}
 .ga{display:none;margin-left:10px;padding:3px 10px;font-size:11px}.selmode .ga{display:inline-block}.mini{width:64px;display:inline-block;margin:0 8px 0 4px;padding:6px 8px}.eph{margin:16px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .note{resize:vertical;font-size:13px;margin:8px 0 0}.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1a20;border:1px solid #4a4a54;border-radius:14px;padding:10px 14px;box-shadow:0 10px 40px #000c}
@@ -70,14 +92,9 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .syn{font-size:13px;color:#b5b5be;margin:12px 0}
 .check{width:100%;border:1px solid #41414a;background:#1b1b21;color:#d8d8df;border-radius:9px;padding:10px;font-weight:750}
 .check.done{border-color:#245b43;background:#13291f;color:#9be4ba}
-.x{float:right;background:none;border:0;color:var(--muted);font-size:20px;line-height:1}
-@media(max-width:900px){.dash{grid-template-columns:1fr}.layout,.layout.open{grid-template-columns:minmax(0,1fr)}#left{position:static;max-height:none;overflow:visible;order:-1}
- aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);height:auto;max-height:84vh;overflow-y:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}}
-@media(max-width:560px){.cgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 4px}.ccard{padding:4px 2px}.cph{width:100%;max-width:64px;height:auto;aspect-ratio:1;margin-bottom:5px}.ini{font-size:15px}.ccard b{font-size:10px}.ccard .act{display:none}.grid{grid-template-columns:repeat(3,1fr);gap:9px}.poster b{font-size:11px}}
-.sechead{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.tabs{display:flex;gap:6px}
-.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:2px 4px;font-size:13px;font-weight:600}
-.tab.on{color:var(--text);border-bottom-color:var(--red)}.tab:hover{color:var(--text)}.tab small{color:var(--muted);font-weight:500;margin-left:3px}
+.x{position:sticky;top:0;float:right;z-index:6;width:38px;height:38px;border-radius:50%;border:1px solid #ffffff22;background:#000b;color:#fff;font-size:22px;line-height:1;display:grid;place-items:center;margin:0 0 6px 8px;padding:0}
+
+/* characters */
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:16px 10px}
 .ccard{cursor:pointer;text-align:center;min-width:0;padding:8px 4px;border-radius:14px;border:1px solid transparent;transition:transform .15s,background .15s,border-color .15s}
 .ccard:hover{transform:translateY(-3px);background:#ffffff08}.ccard.sel{border-color:var(--red)}
@@ -90,148 +107,52 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .ptags{display:flex;gap:6px;margin:6px 0}.pt{border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;color:#55555f;position:relative;cursor:default}
 .pt.on{color:var(--text);border-color:var(--red);background:#ffffff08}.pt.first:after{content:"";position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:var(--red)}
 button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.chip:hover{border-color:var(--red);color:var(--text)}
-.lockwrap{
-  position:relative;
-  margin:9px 0;
-  border:1px solid var(--line);
-  border-radius:11px;
-  overflow:hidden;
-  background:#101014;
-  isolation:isolate;
-}
+.lockwrap{position:relative;margin:9px 0;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#101014;isolation:isolate}
+.blur{padding:10px;filter:blur(7px);user-select:none;pointer-events:none}
+.lockmsg{position:absolute;z-index:2;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;text-align:center;font-size:12px;line-height:1.4;color:#e4e4e9;background:linear-gradient(135deg,#101014eF,#191116eF)}
+.lockmsg span{display:block;max-width:230px}
+.reveal-btn{border:1px solid #733238;background:#291418;color:#ffb5b8;border-radius:99px;padding:7px 16px;font-size:11px;font-weight:750;cursor:pointer}
+.reveal-btn:hover{background:#3a1a20;border-color:var(--red)}
+.secth{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 
-.blur{
-  padding:10px;
-  filter:blur(7px);
-  user-select:none;
-  pointer-events:none;
-}
+/* mobile menu */
+.drawer{position:fixed;inset:0;z-index:60}
+.dscrim{position:absolute;inset:0;background:#000b}
+.dpanel{position:absolute;left:0;top:0;bottom:0;width:min(86vw,340px);background:#101014;border-right:1px solid var(--line);padding:16px;overflow:auto;animation:dslide .2s ease}
+@keyframes dslide{from{transform:translateX(-100%)}to{transform:none}}
+.dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.dnav{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.dnav button{text-align:left;background:#15151a;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px 14px;font-size:14px;font-weight:650}
+.dnav button.on{border-color:var(--red)}
+.dclose{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:#15151a;color:#fff;font-size:24px;line-height:1;padding:0}
 
-.lockmsg{
-  position:absolute;
-  z-index:2;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  padding:14px;
-  text-align:center;
-  font-size:12px;
-  line-height:1.4;
-  color:#e4e4e9;
-  background:linear-gradient(135deg,#101014eF,#191116eF);
+@media(prefers-reduced-motion:reduce){.ccard,.cph,.blur,.lockmsg,.dpanel{transition:none;animation:none}}
+@media(max-width:900px){
+  .burger{display:grid}#left{display:none}.modes .m-chars{display:none}
+  .dash{grid-template-columns:1fr}.layout,.layout.open{grid-template-columns:minmax(0,1fr)}
+  aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);height:auto;max-height:84dvh;overflow-y:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}
+  aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}
+  .x{width:46px;height:46px;font-size:28px}
+  aside .cbig{width:82px;height:82px}aside h3{font-size:18px}aside .syn{font-size:12px;line-height:1.55}
 }
-
-.lockmsg span{
-  display:block;
-  max-width:230px;
-}
-
-.reveal-btn{
-  border:1px solid #733238;
-  background:#291418;
-  color:#ffb5b8;
-  border-radius:99px;
-  padding:7px 16px;
-  font-size:11px;
-  font-weight:750;
-  cursor:pointer;
-}
-
-.reveal-btn:hover{
-  background:#3a1a20;
-  border-color:var(--red);
-}
-
-.secth{
-  margin:14px 0 4px;
-  font-size:11px;
-  color:var(--muted);
-  letter-spacing:.08em;
-  text-transform:uppercase;
-}
-@media(prefers-reduced-motion:reduce){.ccard,.cph,.blur,.lockmsg{transition:none}}
-
-/* CHARACTER ARCHIVE — MOBILE */
 @media(max-width:560px){
-
-  .cgrid{
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:12px 5px;
-  }
-
-  .ccard{
-    padding:7px 2px;
-    border:1px solid transparent;
-    border-radius:12px;
-    min-width:0;
-  }
-
-  .ccard:hover{
-    transform:none;
-  }
-
-  .ccard.sel{
-    background:#ffffff08;
-    border-color:var(--red);
-  }
-
-  .cph{
-    width:min(100%,68px);
-    height:auto;
-    aspect-ratio:1;
-    margin:0 auto 7px;
-    border-radius:50%;
-  }
-
-  .ini{
-    font-size:16px;
-  }
-
-  .ccard b{
-    font-size:10px;
-    line-height:1.2;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
-    min-height:24px;
-  }
-
-  .ccard .act{
-    display:none;
-  }
-
-  /* Character profile popup */
-  aside{
-    width:min(92vw,400px);
-    max-height:84dvh;
-    overflow-y:auto;
-    padding:16px;
-  }
-
-  aside .cbig{
-    width:82px;
-    height:82px;
-  }
-
-  aside h3{
-    font-size:18px;
-  }
-
-  aside .syn{
-    font-size:12px;
-    line-height:1.55;
-  }
+  .wrap{padding:18px 14px 50px}
+  .grid{grid-template-columns:repeat(3,1fr);gap:9px}.poster b{font-size:11px}
+  .cgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 5px}
+  .ccard{padding:7px 2px;border-radius:12px}.ccard:hover{transform:none}.ccard.sel{background:#ffffff08}
+  .cph{width:min(100%,68px);height:auto;aspect-ratio:1;margin:0 auto 7px}.ini{font-size:16px}
+  .ccard b{font-size:10px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:24px}.ccard .act{display:none}
+  .rinfo b{font-size:11px}.nb-txt b{font-size:15px}.nbanner{height:96px}
+  .modes button{padding:8px 11px;font-size:13px}
 }
-
 </style>
 </head>
 <body>
 <div class="wrap">
-<header><div class="brand">FRAME <b>/</b> MARVEL ARCHIVE</div><div id="who" hidden><button class="pill" id="out">Sign out</button></div></header>
+<header>
+  <div class="hl"><button class="burger" id="burger" aria-label="Open menu" hidden>☰</button><div class="brand">FRAME <b>/</b> MARVEL ARCHIVE</div></div>
+  <div id="who" hidden><button class="pill" id="out">Sign out</button></div>
+</header>
 
 <section id="login" class="login" hidden>
  <div class="eyebrow">Sign in</div><h1 style="font-size:30px">Your Marvel archive.</h1>
@@ -246,48 +167,56 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
 
 <main id="app" hidden>
  <div class="eyebrow">Dashboard</div><h1 id="greet"></h1>
- <p class="muted" id="next"></p>
 
-<section id="recentSection" hidden>
-  <div class="sec"><h2>Continue Watching</h2><span>Recently played · Up to 3</span></div>
-  <div class="recent-grid" id="recentList"></div>
-</section>
+ <section id="recentSection" hidden>
+  <div class="sec" style="margin-top:14px"><h2>Continue Watching</h2></div>
+  <div class="rgrid" id="recentList"></div>
+ </section>
 
-<div class="dash">
+ <div class="nbanner" id="nextBanner" hidden></div>
+
+ <div class="dash">
   <div class="box"><div class="muted">YOUR COLLECTION</div><div class="big" id="pct">0%</div><div class="muted" id="cnt"></div><div class="track"><div class="fill" id="bar"></div></div></div>
   <div class="box path" data-path="road-to-endgame"><h3>Road to Endgame</h3><div class="muted" id="p1"></div><div class="track"><div class="fill" id="b1"></div></div></div>
   <div class="box path" data-path="road-to-doomsday"><h3>Road to Doomsday</h3><div class="muted" id="p2">Coming soon.</div><div class="track"><div class="fill" id="b2"></div></div></div>
  </div>
+
+ <div class="modes" id="modes">
+  <button data-mode="all">All</button><button data-mode="movies">Movies</button><button data-mode="series">Series</button><button class="m-chars" data-mode="chars">Characters</button>
+ </div>
  <div class="toolbar">
-  <input id="q" type="search" placeholder="Search title or year…">
-  <select id="fStudio"><option value="">All studios</option></select>
-  <select id="fPhase">
-  <option value="">All categories</option>
-  <option value="phases">All MCU phases</option>
-  <option value="nonphase">Non-phase titles</option>
-  <optgroup label="Individual phases">
-    <option value="Phase One">Phase One</option>
-    <option value="Phase Two">Phase Two</option>
-    <option value="Phase Three">Phase Three</option>
-    <option value="Phase Four">Phase Four</option>
-    <option value="Phase Five">Phase Five</option>
-    <option value="Phase Six">Phase Six</option>
-  </optgroup>
-</select>
-  <select id="fFr"><option value="">All franchises</option></select>
-  <select id="fPath"><option value="">All pathways</option></select>
-  <select id="fKind"><option value="">All types</option><option value="movie">Movies</option><option value="series">Series</option><option value="ss">Shorts &amp; specials</option><option value="assembled">Assembled</option></select>
-  <select id="fStat"><option value="">All</option><option value="u">To watch</option><option value="w">Watched</option></select>
-  <select id="sort"><option value="r">Release order</option><option value="t">MCU timeline order</option><option value="a">A–Z</option></select>
+  <input id="q" type="search" placeholder="Search titles or year…">
+  <button class="pill" id="fbtn">Filters<span id="fcount"></span></button>
   <button class="pill" id="selmode">Select</button>
  </div>
+ <div class="fpanel" id="fpanel" hidden>
+  <label class="fl" data-m="all movies series">Studio<select id="fStudio"><option value="">All studios</option></select></label>
+  <label class="fl" data-m="all movies series chars">Category<select id="fPhase">
+   <option value="">All categories</option><option value="phases">All MCU phases</option><option value="nonphase">Non-phase titles</option>
+   <optgroup label="Individual phases"><option value="Phase One">Phase One</option><option value="Phase Two">Phase Two</option><option value="Phase Three">Phase Three</option><option value="Phase Four">Phase Four</option><option value="Phase Five">Phase Five</option><option value="Phase Six">Phase Six</option></optgroup>
+  </select></label>
+  <label class="fl" data-m="all movies series">Franchise<select id="fFr"><option value="">All franchises</option></select></label>
+  <label class="fl" data-m="all movies series chars">Pathway<select id="fPath"><option value="">All pathways</option></select></label>
+  <label class="fl" data-m="all series">Type<select id="fKind"><option value="">All types</option><option value="series">Series</option><option value="ss">Shorts &amp; specials</option><option value="assembled">Assembled</option></select></label>
+  <label class="fl" data-m="all movies series">Status<select id="fStat"><option value="">All</option><option value="u">To watch</option><option value="w">Watched</option></select></label>
+  <label class="fl" data-m="all movies series chars">Sort<select id="sort"><option value="r">Release order</option><option value="t">MCU timeline order</option><option value="a">A–Z</option></select></label>
+  <button class="secondary" id="freset" style="align-self:end;border-radius:10px">Reset filters</button>
+ </div>
+
  <div class="layout" id="layout"><div id="left"><div class="prog" id="prog"></div></div><div id="list"></div><aside id="side" hidden></aside></div>
+
  <div class="pl" id="pl" hidden><div class="plbox"><div class="plbar"><button class="secondary" id="plx">← Back to details</button><span class="muted" id="plt"></span><span id="plc" style="display:flex;gap:6px;align-items:center;color:var(--muted);font-size:12px"></span></div><div class="plv" id="plv"></div>
-<p class="muted" style="font-size:11px;text-align:center;margin:10px 0 0">
-  If a redirect or new tab opens while loading the video, simply close it
-  and return to FRAME to continue watching.
-</p></div></div>
+<p class="muted" style="font-size:11px;text-align:center;margin:10px 0 0">If a redirect or new tab opens while loading the video, simply close it and return to FRAME to continue watching.</p></div></div>
  <div class="bulk" id="bulk" hidden><span id="bn"></span><button class="secondary" id="ba" style="border-radius:9px">Select all shown</button><button class="primary" id="bw" style="width:auto">Mark watched</button><button class="secondary" id="bu" style="border-radius:9px">Mark unwatched</button><button class="secondary" id="bc" style="border-radius:9px">Clear</button></div>
+
+ <div class="drawer" id="drawer" hidden>
+  <div class="dscrim" data-dclose="1"></div>
+  <nav class="dpanel">
+   <div class="dhead"><b>Menu</b><button class="dclose" data-dclose="1" aria-label="Close menu">×</button></div>
+   <div class="dnav"><button data-mode="all">All</button><button data-mode="movies">Movies</button><button data-mode="series">Series</button><button data-mode="chars">Characters</button></div>
+   <div class="prog" id="prog2"></div>
+  </nav>
+ </div>
 </main>
 </div>
 
@@ -301,6 +230,7 @@ const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assemb
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Marvel Television","Other studios"];
 const THEMES={"road-to-endgame":{r:"#8b5cf6",r2:"#a78bfa",r3:"#c4b5fd",g:"#1d1233"},"road-to-doomsday":{r:"#22a35a",r2:"#4ade80",r3:"#86efac",g:"#0f2a1a"}};
+const BANNER={"road-to-endgame":{a:"#1d1233",b:"#5b34c9",c:"#8b5cf6"},"road-to-doomsday":{a:"#0f2a1a",b:"#1c7a45",c:"#22a35a"}};
 function applyTheme(){
   const t=THEMES[$("fPath").value]||{r:"#e62429",r2:"#f06a6e",r3:"#f17c80",g:"#2a1014"}, st=document.documentElement.style;
   st.setProperty("--red",t.r); st.setProperty("--red2",t.r2); st.setProperty("--red3",t.r3); st.setProperty("--glow",t.g);
@@ -309,15 +239,16 @@ function goSection(k){
   const find=()=>[...document.querySelectorAll("section[data-sec]")].find(x=>x.dataset.sec===k);
   let el=find();
   if(!el){ ["q","fKind","fStudio","fPhase","fFr","fPath","fStat"].forEach(i=>$(i).value=""); $("sort").value="r"; render(); el=find(); }
+  if(!el&&mode!=="all"){ mode="all"; render(); el=find(); }
   if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
 }
-let chars=[],tabs={},selChar=null,revealed=new Set(),holdT=null,epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
+let mode="all",closedAt=0,chars=[],revealed=new Set(),epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,selChar=null,notes={},selMode=false,picked=new Set();
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
   sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user?.id!==user?.id) location.reload(); });
   if(!session){ $("login").hidden=false; return; }
-  user=session.user; $("who").hidden=false;
+  user=session.user; $("who").hidden=false; $("burger").hidden=false;
   const [p,m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
     sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,studios(name),movie_franchises(franchises(name))"),
@@ -330,13 +261,7 @@ async function init(){
     sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id),
     sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no")]);
   name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
-  movies=(m.data||[]).map(x=>({
-  ...x,
-  studio:x.studios?.name||"",
-  frs:(x.movie_franchises||[])
-    .map(f=>f.franchises?.name)
-    .filter(Boolean)
-}));
+  movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:(x.movie_franchises||[]).map(f=>f.franchises?.name).filter(Boolean)}));
   (st.data||[]).forEach(r=>settings[r.key]=r.value);
   (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
   playHistory=pst.data||[]; chars=ch.data||[];
@@ -359,13 +284,15 @@ const group=m=>m.phase||(["20th Century Fox","Sony Pictures","Marvel Television"
 const fmt=d=>d?new Date(d).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"}):"";
 
 const pimg=u=>`<img class="pimg" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`;
+function posterSrc(m,big){
+  const c=(m.custom_poster||"").trim(); if(c) return c;
+  const t=tm[m.id]; return t&&t.p?`https://image.tmdb.org/t/p/${t.still?"w300":(big?"w342":"w185")}${t.p}`:"";
+}
 function thumb(m,big){
   const s=(m.studio==="Marvel Studios"?"MARVEL STUDIOS":(m.studio||"").toUpperCase())+(m.kind&&m.kind!=="movie"?" · "+(KIND[m.kind]||m.kind).toUpperCase():"");
-  const custom=(m.custom_poster||"").trim(), p=tm[m.id]&&tm[m.id].p;
-  const sz=tm[m.id]&&tm[m.id].still?"w300":(big?"w342":"w185"), image=custom||(p?`https://image.tmdb.org/t/p/${sz}${p}`:"");
+  const image=posterSrc(m,big);
   return `<div class="poster" style="--c1:${hue(m.title)}"><i>${esc(s)}</i><b>${esc(m.title)}</b><em>${m.release_year}</em>${image?pimg(image):""}</div>`;
 }
-
 async function tmdb(m){
   if(tm[m.id]) return tm[m.id];
   try{
@@ -414,13 +341,14 @@ async function play(id){
   savePlay(id,c.s,c.e);
 }
 
+/* ---------- characters ---------- */
 const actorShort=c=>(c.actor||"").split(/[;(]/)[0].trim();
 const initials=n=>n.replace(/[^A-Za-z ]/g,"").split(" ").filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
 const firstMovie=c=>{const r=(c.character_titles||[]).find(x=>x.is_first);return r?movies.find(m=>m.id===r.movie_id):null;};
 const charGroup=c=>{
   if(c.no===274) return "Phase Three";
   const f=firstMovie(c);
-  return f?group(f):null;
+  return f?group(f):"Other studios";
 };
 const appears=c=>(c.character_titles||[]).map(r=>movies.find(m=>m.id===r.movie_id)).filter(Boolean).sort((a,b)=>rkey(a).localeCompare(rkey(b)));
 const charPhoto=c=>c.photo_url||(tm["c"+c.no]&&tm["c"+c.no].p?`https://image.tmdb.org/t/p/w185${tm["c"+c.no].p}`:"");
@@ -438,48 +366,44 @@ const cio="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEa
   if(r&&r.p){const ph=document.querySelector(`.ccard[data-char="${c.no}"] .cph`); if(ph&&!ph.querySelector(".pimg")) ph.insertAdjacentHTML("beforeend",pimg(`https://image.tmdb.org/t/p/w185${r.p}`));}
 }),{rootMargin:"200px"}):null;
 
+function ccardHtml(c){
+  const u=charPhoto(c);
+  return `<article class="ccard ${selChar===c.no?"sel":""}" data-char="${c.no}" title="${esc(c.name)}"><div class="cph" style="--c1:${hue(c.name)}"><span class="ini">${esc(initials(c.name))}</span>${u?pimg(u):""}</div><b>${esc(c.name)}</b><span class="act">${esc(c.alias||actorShort(c))}</span></article>`;
+}
+function charsHtml(q,fp,pset,so){
+  const list=chars.filter(c=>{
+    const g=charGroup(c);
+    if(q&&!(c.name.toLowerCase().includes(q)||(c.actor||"").toLowerCase().includes(q)||(c.alias||"").toLowerCase().includes(q))) return false;
+    if(fp&&!(fp==="phases"?PHASES.includes(g):fp==="nonphase"?!PHASES.includes(g):g===fp)) return false;
+    if(pset&&!(c.character_titles||[]).some(r=>pset.has(r.movie_id))) return false;
+    return true;});
+  const G={}; list.forEach(c=>(G[charGroup(c)]??=[]).push(c));
+  const ord=k=>{const i=ORDER.indexOf(k);return i<0?99:i;};
+  return Object.keys(G).sort((a,b)=>ord(a)-ord(b)).map(k=>{
+    const arr=so==="a"?[...G[k]].sort((a,b)=>a.name.localeCompare(b.name)):G[k];
+    return `<section data-sec="${esc(k)}"><div class="sec"><h2 class="${PHASES.includes(k)?"mcu":""}">${esc(k)}</h2><span>${arr.length} character${arr.length===1?"":"s"}</span></div><div class="cgrid">${arr.map(ccardHtml).join("")}</div></section>`;
+  }).join("")||'<div class="empty">No characters match.</div>';
+}
 function sectionHtml(k,arr){
-  const isPh=PHASES.includes(k), mine=chars.filter(c=>charGroup(c)===k), view=(mine.length&&tabs[k]==="chars")?"chars":"movies";
-  const tabsHtml=mine.length?`<div class="tabs"><button class="tab ${view==="movies"?"on":""}" data-tab="${esc(k)}|movies">Movies</button><button class="tab ${view==="chars"?"on":""}" data-tab="${esc(k)}|chars">Characters<small>${mine.length}</small></button></div>`:"";
-  const head=`<div class="sec"><div class="sechead"><h2 class="${isPh||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2>${tabsHtml}</div><span>${arr.filter(m=>watched.has(m.id)).length} / ${arr.length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>`;
-  let body;
-  if(view==="chars"){
-    const q=$("q").value.toLowerCase(), list=mine.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.actor||"").toLowerCase().includes(q)||(c.alias||"").toLowerCase().includes(q));
-    body=`<div class="cgrid">${list.map(c=>{const u=charPhoto(c);return `<article class="ccard ${selChar===c.no?"sel":""}" data-char="${c.no}" title="${esc(c.name)}"><div class="cph" style="--c1:${hue(c.name)}"><span class="ini">${esc(initials(c.name))}</span>${u?pimg(u):""}</div><b>${esc(c.name)}</b><span class="act">${esc(c.alias||actorShort(c))}</span></article>`;}).join("")||'<div class="empty" style="grid-column:1/-1">No characters match.</div>'}</div>`;
-  } else {
-    body=`<div class="grid">${arr.map(m=>`<article class="card ${watched.has(m.id)?"done":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`).join("")}</div>`;
-  }
-  return `<section data-sec="${esc(k)}">${head}${body}</section>`;
+  const isPh=PHASES.includes(k);
+  return `<section data-sec="${esc(k)}"><div class="sec"><h2 class="${isPh||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${arr.filter(m=>watched.has(m.id)).length} / ${arr.length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
+   <div class="grid">${arr.map(m=>`<article class="card ${watched.has(m.id)?"done":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`).join("")}</div></section>`;
 }
 function renderChar(c){
   const side=$("side"), keep=side.scrollTop;
   $("layout").classList.add("open"); side.hidden=false;
   const fm=firstMovie(c), ap=appears(c);
-
-const unlockMovie=(c.unlock_title
-  ?movies.find(m=>m.title.trim().toLowerCase()===c.unlock_title.trim().toLowerCase())
-  :null)||fm;
-
-const gOK=revealed.has("g"+c.no)||(unlockMovie&&watched.has(unlockMovie.id));
-const rOK=revealed.has("r"+c.no)||(fm&&watched.has(fm.id));
-
-const lock=(key,inner,hint)=>`
-  <div class="lockwrap">
-    <div class="blur">${inner}</div>
-    <div class="lockmsg">
-      <span>🔒 ${esc(hint)}</span>
-      <button class="reveal-btn" data-reveal="${key}">Reveal spoilers</button>
-    </div>
-  </div>`;
+  const unlockMovie=(c.unlock_title?movies.find(m=>m.title.trim().toLowerCase()===c.unlock_title.trim().toLowerCase()):null)||fm;
+  const gOK=revealed.has("g"+c.no)||(unlockMovie&&watched.has(unlockMovie.id));
+  const rOK=revealed.has("r"+c.no)||(fm&&watched.has(fm.id));
+  const lock=(key,inner,hint)=>`<div class="lockwrap"><div class="blur">${inner}</div><div class="lockmsg"><span>🔒 ${esc(hint)}</span><button class="reveal-btn" data-reveal="${key}">Reveal spoilers</button></div></div>`;
   const chip=n=>{const x=chars.find(z=>z.no===n);return x?`<button class="chip" data-char="${x.no}" title="${esc(x.role||"")}">${esc(x.name)}</button>`:"";};
   const rel=(label,arr)=>arr&&arr.length?`<h4 class="secth">${label}</h4><div class="chips">${arr.map(chip).join("")}</div>`:"";
   const relHtml=rel("Allies",c.allies)+rel("Enemies",c.enemies);
   const tags=PHASES.map((ph,i)=>{const ts=ap.filter(m=>m.phase===ph);return `<span class="pt ${ts.length?"on":""} ${fm&&fm.phase===ph?"first":""}" title="${esc(ts.length?ts.map(m=>m.title).join(", "):"No appearances listed")}">P${i+1}</span>`;}).join("");
   const photo=charPhoto(c); if(!photo&&!tm["c"+c.no]) tmdbPerson(c).then(r=>{if(r&&r.p&&selChar===c.no) renderSide();});
   const hasLaterStory=!!(c.general_desc||"").trim();
-const gdesc=hasLaterStory
-  ?`<p class="syn" style="margin-top:4px">${esc(c.general_desc.trim())}</p>`
-  :`<p class="syn" style="margin-top:4px">Later story information has not been added to this character's profile yet.</p>`;
+  const gdesc=hasLaterStory?`<p class="syn" style="margin-top:4px">${esc(c.general_desc.trim())}</p>`:`<p class="syn" style="margin-top:4px">Later story information has not been added to this character's profile yet.</p>`;
   side.innerHTML=`<button class="x" data-close="1" aria-label="Close">×</button>
    <div class="cph cbig" style="--c1:${hue(c.name)}"><span class="ini">${esc(initials(c.name))}</span>${photo?pimg(photo):""}</div>
    <div class="eyebrow">${String(c.no).padStart(3,"0")}</div>
@@ -491,13 +415,29 @@ const gdesc=hasLaterStory
    <h4 class="secth">Who they are</h4><p class="syn" style="margin-top:4px">${esc(c.short_desc||"")}</p>
    <h4 class="secth">Origin</h4><p class="syn" style="margin-top:4px">${esc(c.origin||"")}</p>
    ${c.first_seen?`<div class="row">First seen: <span>${esc(c.first_seen)}</span></div>`:""}
-   ${hasLaterStory?`
-  <h4 class="secth">Later story</h4>
-  ${gOK?gdesc:lock("g"+c.no,gdesc,"Spoilers · watch "+(unlockMovie?unlockMovie.title:"their first title")+" to unlock")}
-`:`<h4 class="secth">Later story</h4>${gdesc}`}
+   ${hasLaterStory?`<h4 class="secth">Later story</h4>${gOK?gdesc:lock("g"+c.no,gdesc,"Spoilers · watch "+(unlockMovie?unlockMovie.title:"their first title")+" to unlock")}`:`<h4 class="secth">Later story</h4>${gdesc}`}
    ${relHtml?(rOK?relHtml:lock("r"+c.no,relHtml,"Spoilers · watch "+(fm?fm.title:"their first title")+" to unlock")):""}
    <h4 class="secth">Appears in</h4><div class="chips">${ap.map(m=>`<button class="chip" data-gotitle="${m.id}">${esc(m.title)}</button>`).join("")}</div>`;
   side.scrollTop=keep;
+}
+
+/* ---------- main render ---------- */
+function setMode(m,fromDrawer){
+  mode=m;
+  if(m==="chars"){ selMode=false; picked.clear(); }
+  document.querySelectorAll("#fpanel [data-m]").forEach(el=>{ if(!el.dataset.m.split(" ").includes(m)){ const s=el.querySelector("select"); if(s) s.value=""; } });
+  $("drawer").hidden=true;
+  render();
+  if(fromDrawer) $("modes").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function updateUI(){
+  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("on",b.dataset.mode===mode));
+  $("q").placeholder=mode==="chars"?"Search characters…":"Search titles or year…";
+  $("selmode").hidden=mode==="chars";
+  document.querySelectorAll("#fpanel [data-m]").forEach(el=>el.hidden=!el.dataset.m.split(" ").includes(mode));
+  const act=["fStudio","fPhase","fFr","fPath","fKind","fStat"].filter(i=>!$(i).closest("[data-m]").hidden&&$(i).value).length+($("sort").value!=="r"?1:0);
+  $("fcount").textContent=act?` · ${act}`:""; $("fbtn").classList.toggle("on",act>0);
+  document.querySelectorAll(".path").forEach(p=>p.classList.toggle("on",$("fPath").value===p.dataset.path));
 }
 function render(){
   applyTheme();
@@ -506,46 +446,67 @@ function render(){
   [["road-to-endgame","p1","b1"],["road-to-doomsday","p2","b2"]].forEach(([s,t,b])=>{
     const ids=pathMovies(s); if(!ids.length) return;
     const d=ids.filter(i=>watched.has(i)).length; $(t).textContent=`${d} / ${ids.length} watched`; $(b).style.width=Math.round(d/ids.length*100)+"%";});
-  const pm=pathMovies("road-to-endgame").map(id=>movies.find(m=>m.id===id)).filter(Boolean).sort((a,b)=>rkey(a).localeCompare(rkey(b)));
-  const nx=pm.find(m=>!watched.has(m.id))||movies.find(m=>!watched.has(m.id));
-  $("next").textContent=nx?`Up next: ${nx.title} (${nx.release_year})`:"You’ve watched everything in the library.";
 
-  const q=$("q").value.toLowerCase(),kf=$("fKind").value,st=$("fStudio").value,fp=$("fPhase").value,fr=$("fFr").value,pa=$("fPath").value,sw=$("fStat").value,so=$("sort").value;
+  const q=$("q").value.toLowerCase().trim(),kf=$("fKind").value,st=$("fStudio").value,fp=$("fPhase").value,fr=$("fFr").value,pa=$("fPath").value,sw=$("fStat").value,so=$("sort").value;
   const pset=pa?new Set(pathMovies(pa)):null;
-  const list=movies.filter(m=>(!q||m.title.toLowerCase().includes(q)||String(m.release_year).includes(q))
-    &&(!kf||(kf==="ss"?["short","special"].includes(m.kind):m.kind===kf))
-    &&(!st||m.studio===st)
-    &&(!fp||(fp==="phases"?PHASES.includes(m.phase):fp==="nonphase"?!PHASES.includes(m.phase):m.phase===fp))
-    &&(!fr||m.frs.includes(fr))
-    &&(!pset||pset.has(m.id))
-    &&(!sw||(sw==="w")===watched.has(m.id)));
-  const cmp=so==="a"?(a,b)=>a.title.localeCompare(b.title):so==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
-  list.sort(cmp);
-  GR={}; LAST=list; const G=GR; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
-  const keys=Object.keys(G).sort((a,b)=>{const f=k=>k.startsWith("MCU")?-1:ORDER.indexOf(k);return f(a)-f(b);});
-  $("list").innerHTML=keys.map(k=>sectionHtml(k,G[k])).join("")||'<div class="empty">No movies match.</div>';
-  renderSide();
-  renderProg();
-  renderRecent();
+  if(mode==="chars"){
+    GR={}; LAST=[];
+    $("list").innerHTML=charsHtml(q,fp,pset,so);
+  } else {
+    const modeOk=m=>mode==="movies"?m.kind==="movie":mode==="series"?m.kind!=="movie":true;
+    const list=movies.filter(m=>modeOk(m)&&(!q||m.title.toLowerCase().includes(q)||String(m.release_year).includes(q))
+      &&(!kf||(kf==="ss"?["short","special"].includes(m.kind):m.kind===kf))
+      &&(!st||m.studio===st)
+      &&(!fp||(fp==="phases"?PHASES.includes(m.phase):fp==="nonphase"?!PHASES.includes(m.phase):m.phase===fp))
+      &&(!fr||m.frs.includes(fr))
+      &&(!pset||pset.has(m.id))
+      &&(!sw||(sw==="w")===watched.has(m.id)));
+    const cmp=so==="a"?(a,b)=>a.title.localeCompare(b.title):so==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
+    list.sort(cmp);
+    GR={}; LAST=list; const G=GR; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
+    const keys=Object.keys(G).sort((a,b)=>{const f=k=>k.startsWith("MCU")?-1:ORDER.indexOf(k);return f(a)-f(b);});
+    $("list").innerHTML=keys.map(k=>sectionHtml(k,G[k])).join("")||'<div class="empty">No titles match.</div>';
+  }
+  renderSide(); renderProg(); renderRecent(); renderNext(); updateUI();
   $("layout").classList.toggle("selmode",selMode); $("selmode").textContent=selMode?"Done selecting":"Select";
   if(io) document.querySelectorAll(".card").forEach(c=>{const m=movies.find(x=>x.id==c.dataset.open); if(m&&!m.custom_poster&&!tm[m.id]) io.observe(c);});
   if(cio) document.querySelectorAll(".ccard").forEach(el=>{const c=chars.find(x=>x.no===+el.dataset.char); if(c&&!charPhoto(c)&&!tm["c"+c.no]) cio.observe(el);});
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
 function renderRecent(){
-  const recent=playHistory.map(r=>({r,m:movies.find(x=>x.id===r.movie_id)})).filter(x=>x.m && x.m.kind!=="assembled").slice(0,3);
+  const recent=playHistory.map(r=>({r,m:movies.find(x=>x.id===r.movie_id)})).filter(x=>x.m&&x.m.kind!=="assembled").slice(0,3);
   $("recentSection").hidden=!recent.length;
-  $("recentList").innerHTML=recent.map(({r,m})=>{
-    const progress=m.kind==="series"?`Season ${r.season} · Episode ${r.episode}`:"Movie";
-    return `<div class="recent-card"><div class="recent-thumb">${thumb(m)}</div><div class="recent-info"><b>${esc(m.title)}</b><div class="muted">${esc(String(m.release_year))} · ${progress}</div><button class="secondary" data-play="${m.id}">▶ Continue</button></div></div>`;
-  }).join("");
+  const g=$("recentList"); g.className="rgrid n"+recent.length;
+  g.innerHTML=recent.map(({r,m},i)=>`<div class="rt rt${i+1}" data-play="${m.id}" title="${esc(m.title)}">${thumb(m,1)}<div class="rinfo"><b>${esc(m.title)}</b><span>${m.kind==="series"?`Season ${r.season} · Episode ${r.episode}`:esc(String(m.release_year))}</span><em>▶ Continue</em></div></div>`).join("");
+  recent.forEach(({m})=>{ if(!posterSrc(m)&&!tm[m.id]) tmdb(m).then(x=>{ if(x&&x.p) renderRecent(); }); });
+}
+function nextFor(slug){
+  const p=paths.find(x=>x.slug===slug); if(!p) return null;
+  const rows=[...p.pathway_movies].sort((a,b)=>a.sequence_number-b.sequence_number);
+  const pick=vt=>rows.find(r=>r.viewing_type===vt&&!watched.has(r.movie_id));
+  const r=pick("required")||pick("recommended"); if(!r) return null;
+  const m=movies.find(x=>x.id===r.movie_id); if(!m) return null;
+  const req=rows.filter(x=>x.viewing_type==="required");
+  return {m,r,p,left:req.filter(x=>!watched.has(x.movie_id)).length};
+}
+function renderNext(){
+  const act=$("fPath").value, all=["road-to-endgame","road-to-doomsday"];
+  const order=act?[act,...all.filter(s=>s!==act)]:all;
+  let n=null; for(const s of order){ n=nextFor(s); if(n) break; }
+  const el=$("nextBanner"); el.hidden=!n; if(!n) return;
+  const b=BANNER[n.p.slug]||{a:"#1a1a20",b:"#2a2a33",c:"#4a3a2a"}, src=posterSrc(n.m,true);
+  el.style.background=`linear-gradient(90deg,${b.a} 0%,${b.a} 32%,${b.b} 100%)`; el.style.setProperty("--bc",b.c);
+  el.dataset.nextopen=n.m.id;
+  el.innerHTML=`${src?`<img class="nb-img" src="${esc(src)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<div class="nb-txt"><span class="nb-k">UP NEXT</span><b>${esc(n.m.title)}</b><span class="nb-s">${esc(n.p.name)} · ${esc(n.r.viewing_type)}${n.r.viewing_type==="required"?` · ${n.left} required left`:""}</span></div>`;
+  if(!src&&!tm[n.m.id]) tmdb(n.m).then(x=>{ if(x&&x.p) renderNext(); });
 }
 function renderProg(){
   const row=(n,w,t,g)=>`<div class="pr go" data-goto="${esc(g||n)}"><div><span>${esc(n)}</span><b>${w}/${t}</b></div><div class="track"><div class="fill" style="width:${t?Math.round(w/t*100):0}%"></div></div></div>`;
   const cnt=f=>{const a=movies.filter(f);return [a.filter(m=>watched.has(m.id)).length,a.length];};
   const ph=PHASES.map(p=>{const [w,t]=cnt(m=>m.phase===p);return t?row(p,w,t):""}).join("");
   const st=[...new Set(movies.map(m=>m.studio).filter(Boolean))].sort().map(s=>{const [w,t]=cnt(m=>m.studio===s);return row(s,w,t,s==="Marvel Studios"?"Phase One":["20th Century Fox","Sony Pictures","Marvel Television"].includes(s)?s:"Other studios")}).join("");
-  $("prog").innerHTML=`<div class="eyebrow">Progress</div><h4>MCU phases</h4>${ph}<h4>Studios</h4>${st}`;
+  const html=`<div class="eyebrow">Progress</div><h4>MCU phases</h4>${ph}<h4>Studios</h4>${st}<p class="tmn">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>`;
+  $("prog").innerHTML=html; $("prog2").innerHTML=html;
 }
 async function saveNote(id,patch){
   const n={...(notes[id]||{}),...patch}; notes[id]=n;
@@ -607,19 +568,21 @@ function renderSide(){
    <textarea class="field note" data-note="${m.id}" rows="4" placeholder="Your private notes…">${esc((notes[m.id]||{}).notes||"")}</textarea>${m.kind==="series"?epBlock(m):""}`;
   side.scrollTop=keep;
 }
+
+/* ---------- events ---------- */
 document.addEventListener("click",async e=>{
-  const gt=e.target.closest("[data-goto]"); if(gt){ goSection(gt.dataset.goto); return; }
-  const tb=e.target.closest("[data-tab]"); if(tb){ const [ph,v]=tb.dataset.tab.split("|"); tabs[ph]=v; render(); return; }
-  const rv=e.target.closest("[data-reveal]");
-if(rv){
-  revealed.add(rv.dataset.reveal);
-  renderSide();
-  return;
-}
-  const cc=e.target.closest("[data-char]"); if(cc){ const n=+cc.dataset.char; selChar=(selChar===n&&cc.classList.contains("ccard"))?null:n; sel=null; render(); return; }
-  const gtl=e.target.closest("[data-gotitle]"); if(gtl){ sel=+gtl.dataset.gotitle; selChar=null; render(); return; }
+  const dc=e.target.closest("[data-dclose]"); if(dc){ $("drawer").hidden=true; return; }
+  const md=e.target.closest("[data-mode]"); if(md){ setMode(md.dataset.mode,!!e.target.closest("#drawer")); return; }
+  const gt=e.target.closest("[data-goto]"); if(gt){ $("drawer").hidden=true; goSection(gt.dataset.goto); return; }
+  if(e.target.closest("[data-close]")){ sel=null; selChar=null; closedAt=Date.now(); render(); return; }
+  const rv=e.target.closest("[data-reveal]"); if(rv){ revealed.add(rv.dataset.reveal); renderSide(); return; }
+  const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
+  const guarded=Date.now()-closedAt<450;        // ignore stray taps right after closing a panel
+  const nb=e.target.closest("[data-nextopen]"); if(nb){ if(guarded) return; sel=+nb.dataset.nextopen; selChar=null; render(); return; }
+  const cc=e.target.closest("[data-char]"); if(cc){ if(guarded) return; const n=+cc.dataset.char; selChar=(selChar===n&&cc.classList.contains("ccard"))?null:n; sel=null; render(); return; }
+  const gtl=e.target.closest("[data-gotitle]"); if(gtl){ if(guarded) return; sel=+gtl.dataset.gotitle; selChar=null; render(); return; }
   const b=e.target.closest("[data-id]");
-  if(b){ const id=+b.dataset.id, was=watched.has(id);
+  if(b){ if(guarded) return; const id=+b.dataset.id, was=watched.has(id);
     was?watched.delete(id):watched.add(id); render();               // optimistic
     const r=was?await sb.from("watch_progress").delete().eq("user_id",user.id).eq("movie_id",id)
                :await sb.from("watch_progress").upsert({user_id:user.id,movie_id:id});
@@ -627,9 +590,8 @@ if(rv){
     return; }
   const gb=e.target.closest("[data-grp]");
   if(gb){ const arr=GR[gb.dataset.grp]||[]; const all=arr.every(m=>picked.has(m.id)); arr.forEach(m=>all?picked.delete(m.id):picked.add(m.id)); render(); return; }
-  const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
   const ew=e.target.closest("[data-ewatch]");
-  if(ew&&sel){ const c=curEp(sel), k=`${sel}:${c.s}:${c.e}`, was=epWatched.has(k);
+  if(ew&&sel){ if(guarded) return; const c=curEp(sel), k=`${sel}:${c.s}:${c.e}`, was=epWatched.has(k);
     was?epWatched.delete(k):epWatched.add(k); render();
     const r=was?await sb.from("episode_watched").delete().eq("user_id",user.id).eq("movie_id",sel).eq("season",c.s).eq("episode",c.e)
                :await sb.from("episode_watched").upsert({user_id:user.id,movie_id:sel,season:c.s,episode:c.e});
@@ -641,12 +603,18 @@ if(rv){
   const star=e.target.closest("[data-star]");
   if(star&&sel){ const rc=star.getBoundingClientRect(), i=+star.dataset.star, r=i-((e.clientX-rc.left)<rc.width/2?.5:0);
     const cur=(notes[sel]||{}).rating; saveNote(sel,{rating:cur===r?null:r}); render(); return; }
-  if(e.target.closest("[data-close]")){ sel=null; selChar=null; render(); return; }
   const c=e.target.closest("[data-open]");
-  if(c){ const id=+c.dataset.open; if(selMode){ picked.has(id)?picked.delete(id):picked.add(id); } else{ sel=sel===id?null:id; selChar=null; } render(); }
+  if(c){ if(guarded) return; const id=+c.dataset.open; if(selMode){ picked.has(id)?picked.delete(id):picked.add(id); } else{ sel=sel===id?null:id; selChar=null; } render(); }
 });
 ["q","fKind","fStudio","fPhase","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
-document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{$("fPath").value=p.dataset.path;render();$("list").scrollIntoView({behavior:"smooth"});});
+// tap a pathway card to filter; tap it again to show everything
+document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{
+  const s=p.dataset.path, on=$("fPath").value===s; $("fPath").value=on?"":s; render();
+  if(!on) $("modes").scrollIntoView({behavior:"smooth",block:"start"});
+});
+$("burger").onclick=()=>{ $("drawer").hidden=false; };
+$("fbtn").onclick=()=>{ $("fpanel").hidden=!$("fpanel").hidden; };
+$("freset").onclick=()=>{ ["fStudio","fPhase","fFr","fPath","fKind","fStat"].forEach(i=>$(i).value=""); $("sort").value="r"; render(); };
 $("plx").onclick=()=>{$("pl").hidden=true;$("plv").textContent="";$("plc").innerHTML="";};
 $("selmode").onclick=()=>{selMode=!selMode;if(!selMode)picked.clear();render();};
 $("ba").onclick=()=>{LAST.forEach(m=>picked.add(m.id));render();};
