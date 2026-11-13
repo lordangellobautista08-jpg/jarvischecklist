@@ -92,6 +92,9 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
   .card.reco:not(.done) .poster .pimg{position:absolute;inset:0;z-index:1;filter:grayscale(0.85) brightness(0.62)}
 .card.reco:not(.done) .poster::after{content:"";position:absolute;inset:0;background:var(--reco-color,transparent);mix-blend-mode:color;pointer-events:none;z-index:2}
 .card.reco:not(.done) .poster b,.card.reco:not(.done) .poster em,.card.reco:not(.done) .poster i{position:relative;z-index:3}
+  .card.opt:not(.done) .poster .pimg{position:absolute;inset:0;z-index:1;filter:grayscale(0.85) brightness(0.62)}
+.card.opt:not(.done) .poster::after{content:"";position:absolute;inset:0;background:var(--opt-color,rgba(230,36,41,0.6));mix-blend-mode:color;pointer-events:none;z-index:2}
+.card.opt:not(.done) .poster b,.card.opt:not(.done) .poster em,.card.opt:not(.done) .poster i{position:relative;z-index:3}
 .circ{display:none;position:absolute;top:8px;left:8px;z-index:2;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#0008}.selmode .circ{display:block}.pick .circ{background:var(--red);border-color:var(--red);box-shadow:inset 0 0 0 3px #0009}.pick{border-color:var(--red)}
 .pr{margin:9px 0;font-size:12px}.pr.go{cursor:pointer;border-radius:8px;padding:4px 6px;margin:5px -6px}.pr.go:hover{background:#ffffff0d}.pr>div:first-child{display:flex;justify-content:space-between}.pr b{color:var(--gold);font-weight:700}.pr .track{margin-top:5px;height:4px}.prog h4{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .tmn{font-size:10px;margin-top:16px;color:var(--muted)}
@@ -253,11 +256,11 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Marvel Television","Other studios"];
-const THEMES={"road-to-endgame":{r:"#8b5cf6",r2:"#a78bfa",r3:"#c4b5fd",g:"#1d1233",recoColor:"rgba(34, 163, 90, 0.55)"},"road-to-doomsday":{r:"#22a35a",r2:"#4ade80",r3:"#86efac",g:"#0f2a1a",recoColor:"rgba(63, 0, 144, 0.75)"}};
+const THEMES={"road-to-endgame":{r:"#8b5cf6",r2:"#a78bfa",r3:"#c4b5fd",g:"#1d1233",recoColor:"rgba(34, 163, 90, 0.55)",optColor:"rgba(230, 36, 41, 0.6)"},"road-to-doomsday":{r:"#22a35a",r2:"#4ade80",r3:"#86efac",g:"#0f2a1a",recoColor:"rgba(63, 0, 144, 0.75)",optColor:"rgba(230, 36, 41, 0.6)"}};
 const BANNER={"road-to-endgame":{a:"#1d1233",b:"#5b34c9",c:"#8b5cf6"},"road-to-doomsday":{a:"#0f2a1a",b:"#1c7a45",c:"#22a35a"}};
 function applyTheme(){
-  const t=THEMES[$("fPath").value]||{r:"#e62429",r2:"#f06a6e",r3:"#f17c80",g:"#0f2a14",recoColor:"transparent"}, st=document.documentElement.style;
-  st.setProperty("--red",t.r); st.setProperty("--red2",t.r2); st.setProperty("--red3",t.r3); st.setProperty("--glow",t.g); st.setProperty("--reco-color",t.recoColor);
+  const t=THEMES[$("fPath").value]||{r:"#e62429",r2:"#f06a6e",r3:"#f17c80",g:"#0f2a14",recoColor:"transparent",optColor:"rgba(230, 36, 41, 0.6)"}, st=document.documentElement.style;
+  st.setProperty("--red",t.r); st.setProperty("--red2",t.r2); st.setProperty("--red3",t.r3); st.setProperty("--glow",t.g); st.setProperty("--reco-color",t.recoColor); st.setProperty("--opt-color",t.optColor);
 }
 function goSection(k){
   const find=()=>[...document.querySelectorAll("section[data-sec]")].find(x=>x.dataset.sec===k);
@@ -413,8 +416,9 @@ function sectionHtml(k,arr){
   const activeSlug=$("fPath").value;
   const activePath=activeSlug?paths.find(p=>p.slug===activeSlug):null;
   const recoSet=activePath?new Set(activePath.pathway_movies.filter(pm=>pm.viewing_type==="recommended").map(pm=>pm.movie_id)):new Set();
+  const optSet=activePath?new Set(activePath.pathway_movies.filter(pm=>pm.viewing_type==="optional").map(pm=>pm.movie_id)):new Set();
   return `<section data-sec="${esc(k)}"><div class="sec"><h2 class="${isPh||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${arr.filter(m=>watched.has(m.id)).length} / ${arr.length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
-   <div class="grid">${arr.map(m=>{const d=watched.has(m.id),rc=!d&&recoSet.has(m.id);return `<article class="card ${d?"done":""} ${rc?"reco":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`;}).join("")}</div></section>`;
+   <div class="grid">${arr.map(m=>{const d=watched.has(m.id),rc=!d&&recoSet.has(m.id),op=!d&&optSet.has(m.id);return `<article class="card ${d?"done":""} ${rc?"reco":""} ${op?"opt":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`;}).join("")}</div></section>`;
 }
 function renderChar(c){
   const side=$("side"), keep=side.scrollTop;
