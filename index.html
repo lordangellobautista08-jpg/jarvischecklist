@@ -597,7 +597,8 @@ document.addEventListener("click",async e=>{
   const rv=e.target.closest("[data-reveal]"); if(rv){ revealed.add(rv.dataset.reveal); renderSide(); return; }
   const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
   const guarded=Date.now()-closedAt<450;        // ignore stray taps right after closing a panel
-  const nb=e.target.closest("[data-nextopen]"); if(nb){ if(guarded) return; sel=+nb.dataset.nextopen; selChar=null; render(); return; }
+  const nb=e.target.closest("[data-nextopen]");
+if(nb){ if(guarded) return; play(+nb.dataset.nextopen); return; }
   const cc=e.target.closest("[data-char]"); if(cc){ if(guarded) return; const n=+cc.dataset.char; selChar=(selChar===n&&cc.classList.contains("ccard"))?null:n; sel=null; render(); return; }
   const gtl=e.target.closest("[data-gotitle]"); if(gtl){ if(guarded) return; sel=+gtl.dataset.gotitle; selChar=null; render(); return; }
   const b=e.target.closest("[data-id]");
