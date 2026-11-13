@@ -417,7 +417,11 @@ async function play(id){
 const actorShort=c=>(c.actor||"").split(/[;(]/)[0].trim();
 const initials=n=>n.replace(/[^A-Za-z ]/g,"").split(" ").filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
 const firstMovie=c=>{const r=(c.character_titles||[]).find(x=>x.is_first);return r?movies.find(m=>m.id===r.movie_id):null;};
-const charGroup=c=>{const f=firstMovie(c);return f?group(f):null;};
+const charGroup=c=>{
+  if(c.no===274) return "Phase 3";
+  const f=firstMovie(c);
+  return f?group(f):null;
+};
 const appears=c=>(c.character_titles||[]).map(r=>movies.find(m=>m.id===r.movie_id)).filter(Boolean).sort((a,b)=>rkey(a).localeCompare(rkey(b)));
 const charPhoto=c=>c.photo_url||(tm["c"+c.no]&&tm["c"+c.no].p?`https://image.tmdb.org/t/p/w185${tm["c"+c.no].p}`:"");
 async function tmdbPerson(c){
