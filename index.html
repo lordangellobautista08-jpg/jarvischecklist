@@ -526,7 +526,7 @@ function renderProg(){
   const cnt=f=>{const a=movies.filter(f);return [a.filter(m=>watched.has(m.id)).length,a.length];};
   const ph=PHASES.map(p=>{const [w,t]=cnt(m=>m.phase===p);return t?row(p,w,t):""}).join("");
   const st=[...new Set(movies.map(m=>m.studio).filter(Boolean))].sort().map(s=>{const [w,t]=cnt(m=>m.studio===s);return row(s,w,t,s==="Marvel Studios"?"Phase One":["20th Century Fox","Sony Pictures","Marvel Television"].includes(s)?s:"Other studios")}).join("");
-  const html=`<div class="eyebrow">Progress</div><h4>MCU phases</h4>${ph}<h4>Studios</h4>${st}<p class="tmn">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>`;
+  const html=`<div class="eyebrow">Progress</div><h4>MCU phases</h4>${ph}<h4>Studios</h4>${st}`;
   $("prog").innerHTML=html; $("prog2").innerHTML=html;
 }
 async function saveNote(id,patch){
