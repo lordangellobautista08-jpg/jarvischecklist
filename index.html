@@ -90,12 +90,68 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .ptags{display:flex;gap:6px;margin:6px 0}.pt{border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;color:#55555f;position:relative;cursor:default}
 .pt.on{color:var(--text);border-color:var(--red);background:#ffffff08}.pt.first:after{content:"";position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:var(--red)}
 button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.chip:hover{border-color:var(--red);color:var(--text)}
-.lockwrap{position:relative;margin:8px 0}.blur{filter:blur(7px);user-select:none;pointer-events:none;transition:filter .8s ease}.lockwrap.opening .blur{filter:blur(0)}.lockmsg{transition:opacity .45s ease}.lockwrap.opening .lockmsg{opacity:0;pointer-events:none}
-.lockmsg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;font-size:12px;color:#d6d6dc;padding:6px}
-.hold{position:relative;overflow:hidden;border:1px solid var(--line);background:#1b1b21;color:#d6d6dc;border-radius:99px;padding:5px 14px;font-size:11px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
-.hold i{position:absolute;inset:0;width:0;background:var(--red);opacity:.45}
-.hold.holding i{width:100%;transition:width .9s linear}
-.secth{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.lockwrap{
+  position:relative;
+  margin:9px 0;
+  border:1px solid var(--line);
+  border-radius:11px;
+  overflow:hidden;
+  background:#101014;
+  isolation:isolate;
+}
+
+.blur{
+  padding:10px;
+  filter:blur(7px);
+  user-select:none;
+  pointer-events:none;
+}
+
+.lockmsg{
+  position:absolute;
+  z-index:2;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:14px;
+  text-align:center;
+  font-size:12px;
+  line-height:1.4;
+  color:#e4e4e9;
+  background:linear-gradient(135deg,#101014eF,#191116eF);
+}
+
+.lockmsg span{
+  display:block;
+  max-width:230px;
+}
+
+.reveal-btn{
+  border:1px solid #733238;
+  background:#291418;
+  color:#ffb5b8;
+  border-radius:99px;
+  padding:7px 16px;
+  font-size:11px;
+  font-weight:750;
+  cursor:pointer;
+}
+
+.reveal-btn:hover{
+  background:#3a1a20;
+  border-color:var(--red);
+}
+
+.secth{
+  margin:14px 0 4px;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
 @media(prefers-reduced-motion:reduce){.ccard,.cph,.blur,.lockmsg{transition:none}}
 
 /* CHARACTER ARCHIVE — MOBILE */
@@ -274,7 +330,13 @@ async function init(){
     sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id),
     sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no")]);
   name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
-  movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:x.movie_franchises.map(f=>f.franchises.name)}));
+  movies=(m.data||[]).map(x=>({
+  ...x,
+  studio:x.studios?.name||"",
+  frs:(x.movie_franchises||[])
+    .map(f=>f.franchises?.name)
+    .filter(Boolean)
+}));
   (st.data||[]).forEach(r=>settings[r.key]=r.value);
   (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
   playHistory=pst.data||[]; chars=ch.data||[];
@@ -362,7 +424,7 @@ async function tmdbPerson(c){
   const k="c"+c.no; if(tm[k]) return tm[k];
   const name=c.photo_actor||actorShort(c); if(!name) return null;
   try{const {data,error}=await sb.functions.invoke("tmdb-details",{body:{kind:"person",title:name}}); if(error) throw error;
-    tm[k]={p:data.poster_path||null}; localStorage.setItem("frame_tmdb_v3",JSON.stringify(tm)); return tm[k];
+    tm[k]={p:data.profile_path||data.poster_path||null}; localStorage.setItem("frame_tmdb_v3",JSON.stringify(tm)); return tm[k];
   }catch(err){console.error("TMDB person error:",err);return null;}
 }
 const cio="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(async en=>{
@@ -388,15 +450,32 @@ function sectionHtml(k,arr){
 function renderChar(c){
   const side=$("side"), keep=side.scrollTop;
   $("layout").classList.add("open"); side.hidden=false;
-  const fm=firstMovie(c), ap=appears(c), unl=c.unlock_title?movies.find(m=>m.title===c.unlock_title):fm;
-  const gOK=revealed.has("g"+c.no)||(unl&&watched.has(unl.id)), rOK=revealed.has("r"+c.no)||(fm&&watched.has(fm.id));
-  const lock=(key,inner,hint)=>`<div class="lockwrap"><div class="blur">${inner}</div><div class="lockmsg"><span>🔒 ${esc(hint)}</span><button class="hold" data-reveal="${key}">Click to reveal</button></div></div>`;
+  const fm=firstMovie(c), ap=appears(c);
+
+const unlockMovie=(c.unlock_title
+  ?movies.find(m=>m.title.trim().toLowerCase()===c.unlock_title.trim().toLowerCase())
+  :null)||fm;
+
+const gOK=revealed.has("g"+c.no)||(unlockMovie&&watched.has(unlockMovie.id));
+const rOK=revealed.has("r"+c.no)||(fm&&watched.has(fm.id));
+
+const lock=(key,inner,hint)=>`
+  <div class="lockwrap">
+    <div class="blur">${inner}</div>
+    <div class="lockmsg">
+      <span>🔒 ${esc(hint)}</span>
+      <button class="reveal-btn" data-reveal="${key}">Reveal spoilers</button>
+    </div>
+  </div>`;
   const chip=n=>{const x=chars.find(z=>z.no===n);return x?`<button class="chip" data-char="${x.no}" title="${esc(x.role||"")}">${esc(x.name)}</button>`:"";};
   const rel=(label,arr)=>arr&&arr.length?`<h4 class="secth">${label}</h4><div class="chips">${arr.map(chip).join("")}</div>`:"";
   const relHtml=rel("Allies",c.allies)+rel("Enemies",c.enemies);
   const tags=PHASES.map((ph,i)=>{const ts=ap.filter(m=>m.phase===ph);return `<span class="pt ${ts.length?"on":""} ${fm&&fm.phase===ph?"first":""}" title="${esc(ts.length?ts.map(m=>m.title).join(", "):"No appearances listed")}">P${i+1}</span>`;}).join("");
   const photo=charPhoto(c); if(!photo&&!tm["c"+c.no]) tmdbPerson(c).then(r=>{if(r&&r.p&&selChar===c.no) renderSide();});
-  const gdesc=`<p class="syn" style="margin-top:4px">${esc(c.general_desc||"")}</p>`;
+  const hasLaterStory=!!(c.general_desc||"").trim();
+const gdesc=hasLaterStory
+  ?`<p class="syn" style="margin-top:4px">${esc(c.general_desc.trim())}</p>`
+  :`<p class="syn" style="margin-top:4px">Later story information has not been added to this character's profile yet.</p>`;
   side.innerHTML=`<button class="x" data-close="1" aria-label="Close">×</button>
    <div class="cph cbig" style="--c1:${hue(c.name)}"><span class="ini">${esc(initials(c.name))}</span>${photo?pimg(photo):""}</div>
    <div class="eyebrow">${String(c.no).padStart(3,"0")}</div>
@@ -408,8 +487,10 @@ function renderChar(c){
    <h4 class="secth">Who they are</h4><p class="syn" style="margin-top:4px">${esc(c.short_desc||"")}</p>
    <h4 class="secth">Origin</h4><p class="syn" style="margin-top:4px">${esc(c.origin||"")}</p>
    ${c.first_seen?`<div class="row">First seen: <span>${esc(c.first_seen)}</span></div>`:""}
-   <h4 class="secth">Later story</h4>
-   ${gOK?gdesc:lock("g"+c.no,gdesc,"Spoilers · watch "+(unl?unl.title:"their first title")+" to unlock")}
+   ${hasLaterStory?`
+  <h4 class="secth">Later story</h4>
+  ${gOK?gdesc:lock("g"+c.no,gdesc,"Spoilers · watch "+(unlockMovie?unlockMovie.title:"their first title")+" to unlock")}
+`:`<h4 class="secth">Later story</h4>${gdesc}`}
    ${relHtml?(rOK?relHtml:lock("r"+c.no,relHtml,"Spoilers · watch "+(fm?fm.title:"their first title")+" to unlock")):""}
    <h4 class="secth">Appears in</h4><div class="chips">${ap.map(m=>`<button class="chip" data-gotitle="${m.id}">${esc(m.title)}</button>`).join("")}</div>`;
   side.scrollTop=keep;
@@ -525,7 +606,12 @@ function renderSide(){
 document.addEventListener("click",async e=>{
   const gt=e.target.closest("[data-goto]"); if(gt){ goSection(gt.dataset.goto); return; }
   const tb=e.target.closest("[data-tab]"); if(tb){ const [ph,v]=tb.dataset.tab.split("|"); tabs[ph]=v; render(); return; }
-  const rv=e.target.closest("[data-reveal]"); if(rv){ const w=rv.closest(".lockwrap"); if(w) w.classList.add("opening"); revealed.add(rv.dataset.reveal); setTimeout(render,matchMedia("(prefers-reduced-motion:reduce)").matches?0:800); return; }
+  const rv=e.target.closest("[data-reveal]");
+if(rv){
+  revealed.add(rv.dataset.reveal);
+  renderSide();
+  return;
+}
   const cc=e.target.closest("[data-char]"); if(cc){ const n=+cc.dataset.char; selChar=(selChar===n&&cc.classList.contains("ccard"))?null:n; sel=null; render(); return; }
   const gtl=e.target.closest("[data-gotitle]"); if(gtl){ sel=+gtl.dataset.gotitle; selChar=null; render(); return; }
   const b=e.target.closest("[data-id]");
