@@ -253,7 +253,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Marvel Television","Other studios"];
-const THEMES={"road-to-endgame":{r:"#8b5cf6",r2:"#a78bfa",r3:"#c4b5fd",g:"#1d1233",recoColor:"rgba(34, 163, 90, 0.6)"},"road-to-doomsday":{r:"#22a35a",r2:"#4ade80",r3:"#86efac",g:"#0f2a1a",recoColor:"rgba(139, 92, 246, 0.6)"}};
+const THEMES={"road-to-endgame":{r:"#8b5cf6",r2:"#a78bfa",r3:"#c4b5fd",g:"#1d1233",recoColor:"rgba(34, 163, 90, 0.6)"},"road-to-doomsday":{r:"#22a35a",r2:"#4ade80",r3:"#86efac",g:"#0f2a1a",recoColor:"rgba(63, 0, 144, 0.6)"}};
 const BANNER={"road-to-endgame":{a:"#1d1233",b:"#5b34c9",c:"#8b5cf6"},"road-to-doomsday":{a:"#0f2a1a",b:"#1c7a45",c:"#22a35a"}};
 function applyTheme(){
   const t=THEMES[$("fPath").value]||{r:"#e62429",r2:"#f06a6e",r3:"#f17c80",g:"#0f2a14",recoColor:"transparent"}, st=document.documentElement.style;
