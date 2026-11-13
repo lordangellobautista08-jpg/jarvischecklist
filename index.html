@@ -89,6 +89,8 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .card{position:relative}.done .poster{
   filter:grayscale(1) brightness(.65);
 }.card.done{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}.card.done:after{content:"✓";position:absolute;top:6px;right:8px;color:var(--red3);font-size:15px;font-weight:900;text-shadow:0 1px 6px #000}
+  .card.reco:not(.done){border-color:var(--reco,var(--gold));box-shadow:0 0 0 1px var(--reco,var(--gold)),inset 0 0 14px color-mix(in srgb,var(--reco,var(--gold)) 18%,transparent)}
+.card.reco:not(.done):after{content:"RECO";position:absolute;top:7px;right:7px;z-index:2;background:#09090bcc;border:1px solid var(--reco,var(--gold));color:var(--reco,var(--gold));font-size:8px;font-weight:800;letter-spacing:.08em;padding:2px 5px;border-radius:5px;backdrop-filter:blur(4px)}
 .circ{display:none;position:absolute;top:8px;left:8px;z-index:2;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#0008}.selmode .circ{display:block}.pick .circ{background:var(--red);border-color:var(--red);box-shadow:inset 0 0 0 3px #0009}.pick{border-color:var(--red)}
 .pr{margin:9px 0;font-size:12px}.pr.go{cursor:pointer;border-radius:8px;padding:4px 6px;margin:5px -6px}.pr.go:hover{background:#ffffff0d}.pr>div:first-child{display:flex;justify-content:space-between}.pr b{color:var(--gold);font-weight:700}.pr .track{margin-top:5px;height:4px}.prog h4{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .tmn{font-size:10px;margin-top:16px;color:var(--muted)}
@@ -250,11 +252,11 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const KIND={movie:"Movie",series:"Series",short:"Short",special:"Special",assembled:"Assembled"};
 const PHASES=["Phase One","Phase Two","Phase Three","Phase Four","Phase Five","Phase Six"];
 const ORDER=[...PHASES,"20th Century Fox","Sony Pictures","Marvel Television","Other studios"];
-const THEMES={"road-to-endgame":{r:"#8b5cf6",r2:"#a78bfa",r3:"#c4b5fd",g:"#1d1233"},"road-to-doomsday":{r:"#22a35a",r2:"#4ade80",r3:"#86efac",g:"#0f2a1a"}};
+const THEMES={"road-to-endgame":{r:"#8b5cf6",r2:"#a78bfa",r3:"#c4b5fd",g:"#1d1233",reco:"#f59e0b"},"road-to-doomsday":{r:"#22a35a",r2:"#4ade80",r3:"#86efac",g:"#0f2a1a",reco:"#fb7185"}};
 const BANNER={"road-to-endgame":{a:"#1d1233",b:"#5b34c9",c:"#8b5cf6"},"road-to-doomsday":{a:"#0f2a1a",b:"#1c7a45",c:"#22a35a"}};
 function applyTheme(){
-  const t=THEMES[$("fPath").value]||{r:"#e62429",r2:"#f06a6e",r3:"#f17c80",g:"#2a1014"}, st=document.documentElement.style;
-  st.setProperty("--red",t.r); st.setProperty("--red2",t.r2); st.setProperty("--red3",t.r3); st.setProperty("--glow",t.g);
+  const t=THEMES[$("fPath").value]||{r:"#e62429",r2:"#f06a6e",r3:"#f17c80",g:"#2a1014",reco:"#e7bd72"}, st=document.documentElement.style;
+  st.setProperty("--red",t.r); st.setProperty("--red2",t.r2); st.setProperty("--red3",t.r3); st.setProperty("--glow",t.g); st.setProperty("--reco",t.reco);
 }
 function goSection(k){
   const find=()=>[...document.querySelectorAll("section[data-sec]")].find(x=>x.dataset.sec===k);
@@ -407,8 +409,11 @@ function charsHtml(q,fp,pset,so){
 }
 function sectionHtml(k,arr){
   const isPh=PHASES.includes(k);
+  const activeSlug=$("fPath").value;
+  const activePath=activeSlug?paths.find(p=>p.slug===activeSlug):null;
+  const recoSet=activePath?new Set(activePath.pathway_movies.filter(pm=>pm.viewing_type==="recommended").map(pm=>pm.movie_id)):new Set();
   return `<section data-sec="${esc(k)}"><div class="sec"><h2 class="${isPh||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${arr.filter(m=>watched.has(m.id)).length} / ${arr.length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
-   <div class="grid">${arr.map(m=>`<article class="card ${watched.has(m.id)?"done":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`).join("")}</div></section>`;
+   <div class="grid">${arr.map(m=>{const d=watched.has(m.id),rc=!d&&recoSet.has(m.id);return `<article class="card ${d?"done":""} ${rc?"reco":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`;}).join("")}</div></section>`;
 }
 function renderChar(c){
   const side=$("side"), keep=side.scrollTop;
