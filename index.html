@@ -45,7 +45,50 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .nb-txt b{font-size:17px;line-height:1.2;letter-spacing:-.02em;overflow-wrap:anywhere}
 .nb-s{font-size:11px;color:#ffffffc8}
 
-.dash{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+.dash{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin:18px 0;
+}
+
+/* Desktop: progress cards beside Up Next */
+@media(min-width:901px){
+  #app{
+    display:grid;
+    grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);
+    column-gap:20px;
+    align-items:start;
+  }
+
+  #app > .eyebrow,
+  #app > h1,
+  #recentSection,
+  #modes,
+  .toolbar,
+  .fpanel,
+  .layout,
+  .pl,
+  .bulk,
+  .drawer{
+    grid-column:1 / -1;
+  }
+
+  #nextBanner{
+    grid-column:2;
+    grid-row:4;
+    margin:18px 0;
+    height:100%;
+    min-height:104px;
+  }
+
+  .dash{
+    grid-column:1;
+    grid-row:4;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    margin:18px 0;
+  }
+}
 .box{border:1px solid var(--line);background:linear-gradient(145deg,#17171d,#101014);border-radius:16px;padding:16px}
 .big{font-size:30px;font-weight:800;letter-spacing:-.05em}
 .track{height:6px;border-radius:99px;background:#303038;overflow:hidden;margin-top:10px}.fill{height:100%;background:linear-gradient(90deg,var(--red),var(--red2));width:0;transition:width .25s}
