@@ -97,6 +97,80 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
 .hold.holding i{width:100%;transition:width .9s linear}
 .secth{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 @media(prefers-reduced-motion:reduce){.ccard,.cph,.blur,.lockmsg{transition:none}}
+
+/* CHARACTER ARCHIVE — MOBILE */
+@media(max-width:560px){
+
+  .cgrid{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px 5px;
+  }
+
+  .ccard{
+    padding:7px 2px;
+    border:1px solid transparent;
+    border-radius:12px;
+    min-width:0;
+  }
+
+  .ccard:hover{
+    transform:none;
+  }
+
+  .ccard.sel{
+    background:#ffffff08;
+    border-color:var(--red);
+  }
+
+  .cph{
+    width:min(100%,68px);
+    height:auto;
+    aspect-ratio:1;
+    margin:0 auto 7px;
+    border-radius:50%;
+  }
+
+  .ini{
+    font-size:16px;
+  }
+
+  .ccard b{
+    font-size:10px;
+    line-height:1.2;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    min-height:24px;
+  }
+
+  .ccard .act{
+    display:none;
+  }
+
+  /* Character profile popup */
+  aside{
+    width:min(92vw,400px);
+    max-height:84dvh;
+    overflow-y:auto;
+    padding:16px;
+  }
+
+  aside .cbig{
+    width:82px;
+    height:82px;
+  }
+
+  aside h3{
+    font-size:18px;
+  }
+
+  aside .syn{
+    font-size:12px;
+    line-height:1.55;
+  }
+}
+
 </style>
 </head>
 <body>
