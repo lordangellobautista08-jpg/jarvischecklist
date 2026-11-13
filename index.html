@@ -86,7 +86,7 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .poster i{position:absolute;top:9px;left:10px;font-style:normal;font-size:8px;letter-spacing:.15em;color:#ffffffa0;font-weight:800;max-width:85%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .poster b{position:relative;font-size:13px;line-height:1;letter-spacing:-.03em;font-weight:900;text-shadow:0 2px 10px #0009;word-break:break-word}
 .poster em{position:relative;font-style:normal;font-size:9px;color:#ffffffb0;margin-top:5px}
-.card{position:relative}.done .poster{filter:brightness(.4) saturate(.6)}.done:after{content:"✓";position:absolute;top:6px;right:8px;color:#9be4ba;font-size:15px;font-weight:900;text-shadow:0 1px 6px #000}.done{border-color:#245b43}
+.card{position:relative}.done .poster{filter:brightness(.4) saturate(.6)}.card.done{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}.card.done:after{content:"✓";position:absolute;top:6px;right:8px;color:var(--red3);font-size:15px;font-weight:900;text-shadow:0 1px 6px #000}
 .circ{display:none;position:absolute;top:8px;left:8px;z-index:2;width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:#0008}.selmode .circ{display:block}.pick .circ{background:var(--red);border-color:var(--red);box-shadow:inset 0 0 0 3px #0009}.pick{border-color:var(--red)}
 .pr{margin:9px 0;font-size:12px}.pr.go{cursor:pointer;border-radius:8px;padding:4px 6px;margin:5px -6px}.pr.go:hover{background:#ffffff0d}.pr>div:first-child{display:flex;justify-content:space-between}.pr b{color:var(--gold);font-weight:700}.pr .track{margin-top:5px;height:4px}.prog h4{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .tmn{font-size:10px;margin-top:16px;color:var(--muted)}
@@ -105,7 +105,7 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 .row{font-size:12px;color:var(--muted);margin:4px 0}.row span{color:#d6d6dc}
 .syn{font-size:13px;color:#b5b5be;margin:12px 0}
 .check{width:100%;border:1px solid #41414a;background:#1b1b21;color:#d8d8df;border-radius:9px;padding:10px;font-weight:750}
-.check.done{border-color:#245b43;background:#13291f;color:#9be4ba}
+.check.done{border-color:var(--red);background:var(--glow);color:var(--red3)}
 .x{position:sticky;top:0;float:right;z-index:6;width:38px;height:38px;border-radius:50%;border:1px solid #ffffff22;background:#000b;color:#fff;font-size:22px;line-height:1;display:grid;place-items:center;margin:0 0 6px 8px;padding:0}
 
 /* characters */
