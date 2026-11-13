@@ -74,6 +74,29 @@ aside h3{margin:0 0 4px;font-size:19px;letter-spacing:-.03em;line-height:1.15}
 @media(max-width:900px){.dash{grid-template-columns:1fr}.layout,.layout.open{grid-template-columns:minmax(0,1fr)}#left{position:static;max-height:none;overflow:visible;order:-1}
  aside{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,400px);height:auto;max-height:84vh;overflow-y:auto;z-index:20;border-radius:16px;font-size:14px;padding:14px;box-shadow:0 0 0 100vmax #000a,0 20px 60px #000c}aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}}
 @media(max-width:560px){.grid{grid-template-columns:repeat(3,1fr);gap:9px}.poster b{font-size:11px}}
+.sechead{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:2px 4px;font-size:13px;font-weight:600}
+.tab.on{color:var(--text);border-bottom-color:var(--red)}.tab:hover{color:var(--text)}.tab small{color:var(--muted);font-weight:500;margin-left:3px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:16px 10px}
+.ccard{cursor:pointer;text-align:center;min-width:0;padding:8px 4px;border-radius:14px;border:1px solid transparent;transition:transform .15s,background .15s,border-color .15s}
+.ccard:hover{transform:translateY(-3px);background:#ffffff08}.ccard.sel{border-color:var(--red)}
+.cph{position:relative;width:84px;height:84px;margin:0 auto 8px;border-radius:50%;overflow:hidden;background:linear-gradient(160deg,var(--c1),#0d0d12);display:grid;place-items:center;border:2px solid #ffffff1a;transition:box-shadow .2s,border-color .2s}
+.ccard:hover .cph{border-color:var(--red);box-shadow:0 0 18px -2px var(--red)}
+.ini{font-weight:800;font-size:20px;letter-spacing:.04em;color:#ffffffc0}
+.ccard b{display:block;font-size:12px;line-height:1.25;overflow-wrap:anywhere}.ccard .act{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.cbig{width:96px;height:96px;margin:0 0 10px}
+.badge{display:inline-block;border:1px solid var(--red);color:var(--red3);border-radius:99px;padding:3px 12px;font-size:11px;cursor:pointer;background:none}
+.ptags{display:flex;gap:6px;margin:6px 0}.pt{border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;color:#55555f;position:relative;cursor:default}
+.pt.on{color:var(--text);border-color:var(--red);background:#ffffff08}.pt.first:after{content:"";position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:var(--red)}
+button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.chip:hover{border-color:var(--red);color:var(--text)}
+.lockwrap{position:relative;margin:8px 0}.blur{filter:blur(7px);user-select:none;pointer-events:none}
+.lockmsg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;font-size:12px;color:#d6d6dc;padding:6px}
+.hold{position:relative;overflow:hidden;border:1px solid var(--line);background:#1b1b21;color:#d6d6dc;border-radius:99px;padding:5px 14px;font-size:11px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+.hold i{position:absolute;inset:0;width:0;background:var(--red);opacity:.45}
+.hold.holding i{width:100%;transition:width .9s linear}
+.secth{margin:14px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+@media(prefers-reduced-motion:reduce){.ccard,.cph,.hold.holding i{transition:none}}
 </style>
 </head>
 <body>
@@ -159,14 +182,14 @@ function goSection(k){
   if(!el){ ["q","fKind","fStudio","fPhase","fFr","fPath","fStat"].forEach(i=>$(i).value=""); $("sort").value="r"; render(); el=find(); }
   if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
 }
-let epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
+let chars=[],tabs={},selChar=null,revealed=new Set(),holdT=null,epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,notes={},selMode=false,picked=new Set();
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
   sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user?.id!==user?.id) location.reload(); });
   if(!session){ $("login").hidden=false; return; }
   user=session.user; $("who").hidden=false;
-  const [p,m,pw,w,nt,st,en,pst,ew]=await Promise.all([
+  const [p,m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
     sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,studios(name),movie_franchises(franchises(name))"),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
@@ -175,12 +198,13 @@ async function init(){
     sb.from("app_settings").select("key,value"),
     sb.from("episode_notes").select("movie_id,season,episode,rating,notes").eq("user_id",user.id),
     sb.from("play_state").select("movie_id,season,episode,last_played_at").eq("user_id",user.id).order("last_played_at",{ascending:false,nullsFirst:false}).limit(10),
-    sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id)]);
+    sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id),
+    sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no")]);
   name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
   movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:x.movie_franchises.map(f=>f.franchises.name)}));
   (st.data||[]).forEach(r=>settings[r.key]=r.value);
   (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
-  playHistory=pst.data||[];
+  playHistory=pst.data||[]; chars=ch.data||[];
   (ew.data||[]).forEach(r=>epWatched.add(`${r.movie_id}:${r.season}:${r.episode}`));
   playHistory.forEach(r=>{ plays[r.movie_id]={season:r.season,episode:r.episode}; });
   paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
@@ -255,6 +279,68 @@ async function play(id){
   savePlay(id,c.s,c.e);
 }
 
+const actorShort=c=>(c.actor||"").split(/[;(]/)[0].trim();
+const initials=n=>n.replace(/[^A-Za-z ]/g,"").split(" ").filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+const firstMovie=c=>{const r=(c.character_titles||[]).find(x=>x.is_first);return r?movies.find(m=>m.id===r.movie_id):null;};
+const charPhase=c=>{const f=firstMovie(c);return f&&f.phase||null;};
+const appears=c=>(c.character_titles||[]).map(r=>movies.find(m=>m.id===r.movie_id)).filter(Boolean).sort((a,b)=>rkey(a).localeCompare(rkey(b)));
+const charPhoto=c=>c.photo_url||(tm["c"+c.no]&&tm["c"+c.no].p?`https://image.tmdb.org/t/p/w185${tm["c"+c.no].p}`:"");
+async function tmdbPerson(c){
+  const k="c"+c.no; if(tm[k]) return tm[k];
+  const name=c.photo_actor||actorShort(c); if(!name) return null;
+  try{const {data,error}=await sb.functions.invoke("tmdb-details",{body:{kind:"person",title:name}}); if(error) throw error;
+    tm[k]={p:data.poster_path||null}; localStorage.setItem("frame_tmdb_v3",JSON.stringify(tm)); return tm[k];
+  }catch(err){console.error("TMDB person error:",err);return null;}
+}
+const cio="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(async en=>{
+  if(!en.isIntersecting) return; cio.unobserve(en.target);
+  const c=chars.find(x=>x.no===+en.target.dataset.char); if(!c||charPhoto(c)) return;
+  const r=await tmdbPerson(c);
+  if(r&&r.p){const ph=document.querySelector(`.ccard[data-char="${c.no}"] .cph`); if(ph&&!ph.querySelector(".pimg")) ph.insertAdjacentHTML("beforeend",pimg(`https://image.tmdb.org/t/p/w185${r.p}`));}
+}),{rootMargin:"200px"}):null;
+
+function sectionHtml(k,arr){
+  const isPh=PHASES.includes(k), mine=isPh?chars.filter(c=>charPhase(c)===k):[], view=(mine.length&&tabs[k]==="chars")?"chars":"movies";
+  const tabsHtml=mine.length?`<div class="tabs"><button class="tab ${view==="movies"?"on":""}" data-tab="${esc(k)}|movies">Movies</button><button class="tab ${view==="chars"?"on":""}" data-tab="${esc(k)}|chars">Characters<small>${mine.length}</small></button></div>`:"";
+  const head=`<div class="sec"><div class="sechead"><h2 class="${isPh||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2>${tabsHtml}</div><span>${arr.filter(m=>watched.has(m.id)).length} / ${arr.length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>`;
+  let body;
+  if(view==="chars"){
+    const q=$("q").value.toLowerCase(), list=mine.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.actor||"").toLowerCase().includes(q)||(c.alias||"").toLowerCase().includes(q));
+    body=`<div class="cgrid">${list.map(c=>{const u=charPhoto(c);return `<article class="ccard ${selChar===c.no?"sel":""}" data-char="${c.no}" title="${esc(c.name)}"><div class="cph" style="--c1:${hue(c.name)}"><span class="ini">${esc(initials(c.name))}</span>${u?pimg(u):""}</div><b>${esc(c.name)}</b><span class="act">${esc(c.alias||actorShort(c))}</span></article>`;}).join("")||'<div class="empty" style="grid-column:1/-1">No characters match.</div>'}</div>`;
+  } else {
+    body=`<div class="grid">${arr.map(m=>`<article class="card ${watched.has(m.id)?"done":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`).join("")}</div>`;
+  }
+  return `<section data-sec="${esc(k)}">${head}${body}</section>`;
+}
+function renderChar(c){
+  const side=$("side"), keep=side.scrollTop;
+  $("layout").classList.add("open"); side.hidden=false;
+  const fm=firstMovie(c), ap=appears(c), unl=c.unlock_title?movies.find(m=>m.title===c.unlock_title):fm;
+  const gOK=revealed.has("g"+c.no)||(unl&&watched.has(unl.id)), rOK=revealed.has("r"+c.no)||(fm&&watched.has(fm.id));
+  const lock=(key,inner,hint)=>`<div class="lockwrap"><div class="blur">${inner}</div><div class="lockmsg"><span>🔒 ${esc(hint)}</span><button class="hold" data-reveal="${key}"><i></i>Hold to reveal</button></div></div>`;
+  const chip=n=>{const x=chars.find(z=>z.no===n);return x?`<button class="chip" data-char="${x.no}" title="${esc(x.role||"")}">${esc(x.name)}</button>`:"";};
+  const rel=(label,arr)=>arr&&arr.length?`<h4 class="secth">${label}</h4><div class="chips">${arr.map(chip).join("")}</div>`:"";
+  const relHtml=rel("Allies",c.allies)+rel("Enemies",c.enemies);
+  const tags=PHASES.map((ph,i)=>{const ts=ap.filter(m=>m.phase===ph);return `<span class="pt ${ts.length?"on":""} ${fm&&fm.phase===ph?"first":""}" title="${esc(ts.length?ts.map(m=>m.title).join(", "):"No appearances listed")}">P${i+1}</span>`;}).join("");
+  const photo=charPhoto(c); if(!photo&&!tm["c"+c.no]) tmdbPerson(c).then(r=>{if(r&&r.p&&selChar===c.no) renderSide();});
+  const gdesc=`<p class="syn" style="margin-top:4px">${esc(c.general_desc||"")}</p>`;
+  side.innerHTML=`<button class="x" data-close="1" aria-label="Close">×</button>
+   <div class="cph cbig" style="--c1:${hue(c.name)}"><span class="ini">${esc(initials(c.name))}</span>${photo?pimg(photo):""}</div>
+   <div class="eyebrow">${String(c.no).padStart(3,"0")}</div>
+   <h3>${esc(c.name)}${c.alias?` <span class="muted" style="font-weight:500">· ${esc(c.alias)}</span>`:""}</h3>
+   ${c.actor?`<div class="row">Played by <span>${esc(c.actor)}</span></div>`:""}
+   ${c.role?`<div class="row"><span>${esc(c.role)}</span></div>`:""}
+   ${fm&&!watched.has(fm.id)?`<p style="margin:10px 0 0"><button class="badge" data-gotitle="${fm.id}">★ Start here: ${esc(fm.title)} (${fm.release_year})</button></p>`:""}
+   <h4 class="secth">Phases</h4><div class="ptags">${tags}</div>
+   <h4 class="secth">Who they are</h4><p class="syn" style="margin-top:4px">${esc(c.short_desc||"")}</p>
+   <h4 class="secth">Origin</h4><p class="syn" style="margin-top:4px">${esc(c.origin||"")}</p>
+   ${c.first_seen?`<div class="row">First seen: <span>${esc(c.first_seen)}</span></div>`:""}
+   <h4 class="secth">Later story</h4>
+   ${gOK?gdesc:lock("g"+c.no,gdesc,"Spoilers · watch "+(unl?unl.title:"their first title")+" to unlock")}
+   ${relHtml?(rOK?relHtml:lock("r"+c.no,relHtml,"Spoilers · watch "+(fm?fm.title:"their first title")+" to unlock")):""}
+   <h4 class="secth">Appears in</h4><div class="chips">${ap.map(m=>`<button class="chip" data-gotitle="${m.id}">${esc(m.title)}</button>`).join("")}</div>`;
+  side.scrollTop=keep;
+}
 function render(){
   applyTheme();
   const total=movies.length,done=movies.filter(m=>watched.has(m.id)).length,pct=total?Math.round(done/total*100):0;
@@ -279,14 +365,13 @@ function render(){
   list.sort(cmp);
   GR={}; LAST=list; const G=GR; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
   const keys=Object.keys(G).sort((a,b)=>{const f=k=>k.startsWith("MCU")?-1:ORDER.indexOf(k);return f(a)-f(b);});
-  $("list").innerHTML=keys.map(k=>`<section data-sec="${esc(k)}"><div class="sec"><h2 class="${PHASES.includes(k)||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${G[k].filter(m=>watched.has(m.id)).length} / ${G[k].length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
-   <div class="grid">${G[k].map(m=>`<article class="card ${watched.has(m.id)?"done":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`).join("")}</div></section>`).join("")
-   ||'<div class="empty">No movies match.</div>';
+  $("list").innerHTML=keys.map(k=>sectionHtml(k,G[k])).join("")||'<div class="empty">No movies match.</div>';
   renderSide();
   renderProg();
   renderRecent();
   $("layout").classList.toggle("selmode",selMode); $("selmode").textContent=selMode?"Done selecting":"Select";
   if(io) document.querySelectorAll(".card").forEach(c=>{const m=movies.find(x=>x.id==c.dataset.open); if(m&&!m.custom_poster&&!tm[m.id]) io.observe(c);});
+  if(cio) document.querySelectorAll(".ccard").forEach(el=>{const c=chars.find(x=>x.no===+el.dataset.char); if(c&&!charPhoto(c)&&!tm["c"+c.no]) cio.observe(el);});
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
 function renderRecent(){
@@ -344,6 +429,7 @@ async function bulk(mark){
   if(r.error){ watched=before; render(); alert("Couldn’t save: "+r.error.message); }
 }
 function renderSide(){
+  const cc=chars.find(x=>x.no===selChar); if(cc){ renderChar(cc); return; }
   const m=movies.find(x=>x.id===sel), side=$("side"), keep=side.scrollTop;
   $("layout").classList.toggle("open",!!m); side.hidden=!m; if(!m) return;
   const d=watched.has(m.id), ps=paths.map(p=>{const x=p.pathway_movies.find(x=>x.movie_id===m.id);return x?`${p.name} · ${x.viewing_type}`:null}).filter(Boolean);
@@ -365,6 +451,10 @@ function renderSide(){
 }
 document.addEventListener("click",async e=>{
   const gt=e.target.closest("[data-goto]"); if(gt){ goSection(gt.dataset.goto); return; }
+  const tb=e.target.closest("[data-tab]"); if(tb){ const [ph,v]=tb.dataset.tab.split("|"); tabs[ph]=v; render(); return; }
+  const rv=e.target.closest("[data-reveal]"); if(rv){ if(e.detail===0){ revealed.add(rv.dataset.reveal); render(); } return; }
+  const cc=e.target.closest("[data-char]"); if(cc){ const n=+cc.dataset.char; selChar=(selChar===n&&cc.classList.contains("ccard"))?null:n; sel=null; render(); return; }
+  const gtl=e.target.closest("[data-gotitle]"); if(gtl){ sel=+gtl.dataset.gotitle; selChar=null; render(); return; }
   const b=e.target.closest("[data-id]");
   if(b){ const id=+b.dataset.id, was=watched.has(id);
     was?watched.delete(id):watched.add(id); render();               // optimistic
@@ -388,12 +478,15 @@ document.addEventListener("click",async e=>{
   const star=e.target.closest("[data-star]");
   if(star&&sel){ const rc=star.getBoundingClientRect(), i=+star.dataset.star, r=i-((e.clientX-rc.left)<rc.width/2?.5:0);
     const cur=(notes[sel]||{}).rating; saveNote(sel,{rating:cur===r?null:r}); render(); return; }
-  if(e.target.closest("[data-close]")){ sel=null; render(); return; }
+  if(e.target.closest("[data-close]")){ sel=null; selChar=null; render(); return; }
   const c=e.target.closest("[data-open]");
-  if(c){ const id=+c.dataset.open; if(selMode){ picked.has(id)?picked.delete(id):picked.add(id); } else sel=sel===id?null:id; render(); }
+  if(c){ const id=+c.dataset.open; if(selMode){ picked.has(id)?picked.delete(id):picked.add(id); } else{ sel=sel===id?null:id; selChar=null; } render(); }
 });
 ["q","fKind","fStudio","fPhase","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
 document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{$("fPath").value=p.dataset.path;render();$("list").scrollIntoView({behavior:"smooth"});});
+document.addEventListener("pointerdown",e=>{const b=e.target.closest("[data-reveal]"); if(!b) return; b.classList.add("holding"); clearTimeout(holdT); holdT=setTimeout(()=>{revealed.add(b.dataset.reveal); render();},900);});
+["pointerup","pointercancel","pointerout"].forEach(t=>document.addEventListener(t,()=>{clearTimeout(holdT); const b=document.querySelector(".hold.holding"); if(b) b.classList.remove("holding");},true));
+document.addEventListener("contextmenu",e=>{if(e.target.closest("[data-reveal]")) e.preventDefault();});
 $("plx").onclick=()=>{$("pl").hidden=true;$("plv").textContent="";$("plc").innerHTML="";};
 $("selmode").onclick=()=>{selMode=!selMode;if(!selMode)picked.clear();render();};
 $("ba").onclick=()=>{LAST.forEach(m=>picked.add(m.id));render();};
