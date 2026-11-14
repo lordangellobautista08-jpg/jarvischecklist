@@ -232,8 +232,12 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
  </div>
 
  <div class="modes" id="modes">
-  <button data-mode="all">All</button><button data-mode="movies">Movies</button><button data-mode="series">Series</button><button class="m-chars" data-mode="chars">Characters</button>
- </div>
+  <button data-mode="all">All</button>
+  <button data-mode="movies">Movies</button>
+  <button data-mode="series">Series</button>
+  <button class="m-chars" data-mode="chars">Characters</button>
+  <button data-mode="foryou" hidden>For You</button>
+</div>
  <div class="toolbar">
   <input id="q" type="search" placeholder="Search titles or year…">
   <button class="pill" id="fbtn">Filters<span id="fcount"></span></button>
@@ -263,7 +267,13 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
   <div class="dscrim" data-dclose="1"></div>
   <nav class="dpanel">
    <div class="dhead"><b>Menu</b><button class="dclose" data-dclose="1" aria-label="Close menu">×</button></div>
-   <div class="dnav"><button data-mode="all">All</button><button data-mode="movies">Movies</button><button data-mode="series">Series</button><button data-mode="chars">Characters</button></div>
+   <div class="dnav">
+  <button data-mode="all">All</button>
+  <button data-mode="movies">Movies</button>
+  <button data-mode="series">Series</button>
+  <button data-mode="chars">Characters</button>
+  <button data-mode="foryou" hidden>For You</button>
+</div>
 
    <div class="prog" id="prog2"></div>
   </nav>
@@ -293,7 +303,7 @@ function goSection(k){
   if(!el&&mode!=="all"){ mode="all"; render(); el=find(); }
   if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
 }
-let mode="all",closedAt=0,chars=[],revealed=new Set(),epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,selChar=null,notes={},selMode=false,picked=new Set();
+let mode="all",closedAt=0,chars=[],revealed=new Set(),epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,selChar=null,notes={},selMode=false,picked=new Set(),canSeeForYou=false;
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
@@ -302,7 +312,7 @@ async function init(){
   user=session.user; $("who").hidden=false; $("burger").hidden=false;
   const [p,m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
-    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,studios(name),movie_franchises(franchises(name))"),
+    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,is_exclusive,studios(name),movie_franchises(franchises(name))"),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
@@ -311,7 +321,15 @@ async function init(){
     sb.from("play_state").select("movie_id,season,episode,last_played_at").eq("user_id",user.id).order("last_played_at",{ascending:false,nullsFirst:false}).limit(10),
     sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id),
     sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no")]);
-  name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
+  const displayName=(p.data?.display_name||"").trim().toLowerCase();
+
+canSeeForYou=["jajajai","iyo","sky"].includes(displayName);
+
+name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
+
+document.querySelectorAll('[data-mode="foryou"]').forEach(btn=>{
+  btn.hidden=!canSeeForYou;
+});
   movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:(x.movie_franchises||[]).map(f=>f.franchises?.name).filter(Boolean)}));
   (st.data||[]).forEach(r=>settings[r.key]=r.value);
   (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
@@ -319,8 +337,10 @@ async function init(){
   (ew.data||[]).forEach(r=>epWatched.add(`${r.movie_id}:${r.season}:${r.episode}`));
   playHistory.forEach(r=>{ plays[r.movie_id]={season:r.season,episode:r.episode}; });
   paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
-  fill("fStudio",[...new Set(movies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
-  fill("fFr",[...new Set(movies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
+  const regularMovies=movies.filter(x=>!x.is_exclusive);
+
+fill("fStudio",[...new Set(regularMovies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
+fill("fFr",[...new Set(regularMovies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
   fill("fPath",paths.map(p=>[p.slug,p.name]));
   const nn=name.toLowerCase().replace(/[^a-z]/g,"");
   const special=/^(jai|jay|jaiane|jayane|jayan|jaian|yang|buyang|jajajai)+$/.test(nn);   // add more name pieces here
@@ -478,6 +498,8 @@ function renderChar(c){
 
 /* ---------- main render ---------- */
 function setMode(m,fromDrawer){
+  if(m==="foryou"&&!canSeeForYou) return;
+
   mode=m;
   if(m==="chars"){ selMode=false; picked.clear(); }
   document.querySelectorAll("#fpanel [data-m]").forEach(el=>{ if(!el.dataset.m.split(" ").includes(m)){ const s=el.querySelector("select"); if(s) s.value=""; } });
@@ -487,8 +509,16 @@ function setMode(m,fromDrawer){
 }
 function updateUI(){
   document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("on",b.dataset.mode===mode));
-  $("q").placeholder=mode==="chars"?"Search characters…":"Search titles or year…";
-  $("selmode").hidden=mode==="chars";
+  $("q").placeholder=mode==="chars"
+  ?"Search characters…"
+  :mode==="foryou"
+    ?"Search your titles…"
+    :"Search titles or year…";
+
+$("selmode").hidden=mode==="chars"||mode==="foryou";
+$("fbtn").hidden=mode==="foryou";
+
+if(mode==="foryou") $("fpanel").hidden=true;
   document.querySelectorAll("#fpanel [data-m]").forEach(el=>el.hidden=!el.dataset.m.split(" ").includes(mode));
   const act=["fStudio","fPhase","fFr","fPath","fKind","fStat"].filter(i=>!$(i).closest("[data-m]").hidden&&$(i).value).length+($("sort").value!=="r"?1:0);
   $("fcount").textContent=act?` · ${act}`:""; $("fbtn").classList.toggle("on",act>0);
@@ -496,7 +526,10 @@ function updateUI(){
 }
 function render(){
   applyTheme();
-  const total=movies.length,done=movies.filter(m=>watched.has(m.id)).length,pct=total?Math.round(done/total*100):0;
+  const regularMovies=movies.filter(m=>!m.is_exclusive);
+const total=regularMovies.length;
+const done=regularMovies.filter(m=>watched.has(m.id)).length;
+const pct=total?Math.round(done/total*100):0;
   $("pct").textContent=pct+"%";$("cnt").textContent=`${done} / ${total} watched`;$("bar").style.width=pct+"%";
   [["road-to-endgame","p1","b1"],["road-to-doomsday","p2","b2"]].forEach(([s,t,b])=>{
     const ids=pathMovies(s); if(!ids.length) return;
@@ -508,7 +541,16 @@ function render(){
     GR={}; LAST=[];
     $("list").innerHTML=charsHtml(q,fp,pset,so);
   } else {
-    const modeOk=m=>mode==="movies"?m.kind==="movie":mode==="series"?m.kind!=="movie":true;
+    const modeOk=m=>{
+  if(mode==="foryou") return !!m.is_exclusive;
+  if(m.is_exclusive) return false;
+
+  return mode==="movies"
+    ?m.kind==="movie"
+    :mode==="series"
+      ?m.kind!=="movie"
+      :true;
+};
     const list=movies.filter(m=>modeOk(m)&&(!q||m.title.toLowerCase().includes(q)||String(m.release_year).includes(q))
       &&(!kf||(kf==="ss"?["short","special"].includes(m.kind):m.kind===kf))
       &&(!st||m.studio===st)
@@ -518,7 +560,15 @@ function render(){
       &&(!sw||(sw==="w")===watched.has(m.id)));
     const cmp=so==="a"?(a,b)=>a.title.localeCompare(b.title):so==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
     list.sort(cmp);
-    GR={}; LAST=list; const G=GR; list.forEach(m=>{const k=so==="t"&&m.phase?"MCU timeline (in-universe order)":group(m);(G[k]??=[]).push(m);});
+    GR={}; LAST=list; const G=GR; list.forEach(m=>{
+  const k=mode==="foryou"
+    ?"For You"
+    :so==="t"&&m.phase
+      ?"MCU timeline (in-universe order)"
+      :group(m);
+
+  (G[k]??=[]).push(m);
+});
     const keys=Object.keys(G).sort((a,b)=>{const f=k=>k.startsWith("MCU")?-1:ORDER.indexOf(k);return f(a)-f(b);});
     $("list").innerHTML=keys.map(k=>sectionHtml(k,G[k])).join("")||'<div class="empty">No titles match.</div>';
   }
@@ -556,12 +606,38 @@ function renderNext(){
   if(!src&&!tm[n.m.id]) tmdb(n.m).then(x=>{ if(x&&x.p) renderNext(); });
 }
 function renderProg(){
+  const regularMovies=movies.filter(m=>!m.is_exclusive);
+
   const row=(n,w,t,g)=>`<div class="pr go" data-goto="${esc(g||n)}"><div><span>${esc(n)}</span><b>${w}/${t}</b></div><div class="track"><div class="fill" style="width:${t?Math.round(w/t*100):0}%"></div></div></div>`;
-  const cnt=f=>{const a=movies.filter(f);return [a.filter(m=>watched.has(m.id)).length,a.length];};
-  const ph=PHASES.map(p=>{const [w,t]=cnt(m=>m.phase===p);return t?row(p,w,t):""}).join("");
-  const st=[...new Set(movies.map(m=>m.studio).filter(Boolean))].sort().map(s=>{const [w,t]=cnt(m=>m.studio===s);return row(s,w,t,s==="Marvel Studios"?"Phase One":["20th Century Fox","Sony Pictures","Marvel Television"].includes(s)?s:"Other studios")}).join("");
+
+  const cnt=f=>{
+    const a=regularMovies.filter(f);
+    return [a.filter(m=>watched.has(m.id)).length,a.length];
+  };
+
+  const ph=PHASES.map(p=>{
+    const [w,t]=cnt(m=>m.phase===p);
+    return t?row(p,w,t):"";
+  }).join("");
+
+  const st=[...new Set(regularMovies.map(m=>m.studio).filter(Boolean))]
+    .sort()
+    .map(s=>{
+      const [w,t]=cnt(m=>m.studio===s);
+      return row(
+        s,w,t,
+        s==="Marvel Studios"
+          ?"Phase One"
+          :["20th Century Fox","Sony Pictures","Marvel Television"].includes(s)
+            ?s
+            :"Other studios"
+      );
+    }).join("");
+
   const html=`<div class="eyebrow">Progress</div><h4>MCU phases</h4>${ph}<h4>Studios</h4>${st}`;
-  $("prog").innerHTML=html; $("prog2").innerHTML=html;
+
+  $("prog").innerHTML=html;
+  $("prog2").innerHTML=html;
 }
 async function saveNote(id,patch){
   const n={...(notes[id]||{}),...patch}; notes[id]=n;
