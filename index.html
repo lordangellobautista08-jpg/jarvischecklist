@@ -336,16 +336,15 @@ async function init(){
   if(!session){ $("login").hidden=false; return; }
   user=session.user; $("who").hidden=false; $("burger").hidden=false;
 
-  // 1. Fetch user profile first to get their display name/username
-  const p = await sb.from("profiles").select("display_name").eq("id", user.id).maybeSingle();
-  const displayName = (p.data?.display_name || "").trim().toLowerCase();
-  window.currentUsername = displayName; 
-  name = p.data?.display_name || (user.email ? user.email.split("@")[0] : "Guest");
+  // 1. Get the logged-in user's email directly from Supabase Auth session
+  const userEmail = (user.email || "").trim().toLowerCase();
+  window.currentUsername = userEmail; 
+  name = user.email ? user.email.split("@")[0] : "Guest";
 
-  // 2. Check if user has explicit exclusives or is in the whitelist
+  // 2. Check if user has explicit exclusives matching their email
   const { data: userExclusiveCheck } = await sb.from("movies")
     .select("id")
-    .contains("allowed_users", [displayName])
+    .contains("allowed_users", [userEmail])
     .limit(1);
 
   canSeeForYou = Boolean(userExclusiveCheck && userExclusiveCheck.length > 0);
@@ -354,11 +353,11 @@ async function init(){
     btn.hidden = !canSeeForYou;
   });
 
-  // 3. Fetch movies filtering public content or content containing currentUsername in allowed_users
+  // 3. Fetch movies filtering public content or content containing userEmail in allowed_users
   const [m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
     sb.from("movies")
       .select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,allowed_users,episodes,seasons,episodes_per_season,anilist_id,studios(name),movie_franchises(franchises(name))")
-      .or(`allowed_users.eq.{},allowed_users.cs.{"${displayName}"}`),
+      .or(`allowed_users.eq.{},allowed_users.cs.{"${userEmail}"}`),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
