@@ -558,7 +558,8 @@ const pct=total?Math.round(done/total*100):0;
       &&(!fr||m.frs.includes(fr))
       &&(!pset||pset.has(m.id))
       &&(!sw||(sw==="w")===watched.has(m.id)));
-    const cmp=so==="a"?(a,b)=>a.title.localeCompare(b.title):so==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
+    const effectiveSort = mode === "foryou" ? "a" : so;
+const cmp=effectiveSort==="a"?(a,b)=>a.title.localeCompare(b.title):effectiveSort==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
     list.sort(cmp);
     GR={}; LAST=list; const G=GR; list.forEach(m=>{
   const k=mode==="foryou"
