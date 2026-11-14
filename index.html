@@ -472,13 +472,16 @@ function loadPlayerEmbed(id) {
 }
 
 function renderIframe(url, id, s, e) {
+  const plv = $("plv");
+  plv.innerHTML = ""; // Completely destroy the old player iframe
+
   const f = document.createElement("iframe"); 
   f.src = url; 
   f.allowFullscreen = true; 
   f.referrerPolicy = "no-referrer";
   f.setAttribute("allow", "fullscreen; encrypted-media");
-  $("plv").textContent = ""; 
-  $("plv").appendChild(f);
+  
+  plv.appendChild(f);
   savePlay(id, s, e);
 }
 
