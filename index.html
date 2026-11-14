@@ -102,7 +102,11 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .pl{position:fixed;inset:0;background:#000e;z-index:70;display:flex;align-items:center;justify-content:center;padding:14px}.plbox{width:min(1000px,100%)}@media(max-width:900px){.plbox{width:min(92vw,calc((100dvh - 90px)*16/9))}}@media(max-height:500px){.plbox{width:min(80vw,calc((100dvh - 70px)*16/9))}.pl p{display:none}}.plbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .plv{aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;place-items:center;color:var(--muted);text-align:center;padding:14px}.plv iframe{width:100%;height:100%;border:0}
 .ga{display:none;margin-left:10px;padding:3px 10px;font-size:11px}.selmode .ga{display:inline-block}.mini{width:auto;min-width:68px;display:inline-block;margin:0 8px 0 4px;padding:6px 8px;background:#0d0d11;border:1px solid #34343c;border-radius:9px;color:#fff;cursor:pointer}.eph{margin:16px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-.note{resize:vertical;font-size:13px;margin:8px 0 0}.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1a20;border:1px solid #4a4a54;border-radius:14px;padding:10px 14px;box-shadow:0 10px 40px #000c}
+.note{resize:vertical;font-size:13px;margin:8px 0 0}
+
+/* Bulk Selection Bar */
+.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1a20;border:1px solid #4a4a54;border-radius:14px;padding:10px 14px;box-shadow:0 10px 40px #000c;max-width:96vw}
+
 .empty{color:var(--muted);text-align:center;padding:35px;border:1px dashed var(--line);border-radius:14px}
 #left{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}aside{position:sticky;top:16px;height:calc(100vh - 32px);overflow-y:scroll;overscroll-behavior:contain}aside,.prog{border:1px solid #383840;background:#15151a;border-radius:16px;padding:16px}
 aside .poster{aspect-ratio:16/10;border-radius:10px;margin-bottom:12px}aside .poster b{font-size:22px}
@@ -156,6 +160,20 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
   aside .poster{aspect-ratio:16/7}aside .poster b{font-size:18px}.st{font-size:23px}
   .x{width:46px;height:46px;font-size:28px}
   aside .cbig{width:82px;height:82px}aside h3{font-size:18px}aside .syn{font-size:12px;line-height:1.55}
+
+  /* Responsive Player Bar & Controls scaling on Mobile */
+  .plbar{flex-wrap:wrap;gap:6px;padding:0 2px;}
+  #plx{font-size:11px;padding:6px 10px;height:32px;}
+  #plt{font-size:11px;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #plc{font-size:11px;gap:3px;}
+  #plc span{font-size:10px;}
+  #plc select.mini{min-width:48px;padding:4px 4px;font-size:11px;margin:0 2px 0 1px;border-radius:6px;}
+  #plLoad{padding:4px 8px!important;font-size:10px!important;height:28px;}
+
+  /* Scaled-down Bulk Bar on Mobile */
+  .bulk{padding:8px 10px;gap:6px;bottom:12px;border-radius:12px;}
+  .bulk span{font-size:11px;}
+  .bulk button{padding:6px 10px;font-size:11px;border-radius:8px!important;}
 }
 @media(max-width:560px){
   .wrap{padding:18px 14px 50px}
@@ -246,7 +264,15 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
 
  <div class="pl" id="pl" hidden><div class="plbox"><div class="plbar"><button class="secondary" id="plx">← Back to details</button><span class="muted" id="plt"></span><span id="plc" style="display:flex;gap:6px;align-items:center;color:var(--muted);font-size:12px"></span></div><div class="plv" id="plv"></div>
 <p class="muted" style="font-size:11px;text-align:center;margin:10px 0 0">If a redirect or new tab opens while loading the video, simply close it and return to FRAME to continue watching.</p></div></div>
- <div class="bulk" id="bulk" hidden><span id="bn"></span><button class="secondary" id="ba" style="border-radius:9px">Select all shown</button><button class="primary" id="bw" style="width:auto">Mark watched</button><button class="secondary" id="bu" style="border-radius:9px">Mark unwatched</button><button class="secondary" id="bc" style="border-radius:9px">Clear</button></div>
+ 
+ <div class="bulk" id="bulk" hidden>
+   <span id="bn"></span>
+   <button class="secondary" id="ba" style="border-radius:9px">Select all shown</button>
+   <button class="primary" id="bw" style="width:auto">Mark watched</button>
+   <button class="secondary" id="bu" style="border-radius:9px">Mark unwatched</button>
+   <button class="secondary" id="bc" style="border-radius:9px">Clear</button>
+   <button class="secondary" id="bdone" style="border-radius:9px">Done selecting</button>
+ </div>
 
  <div class="drawer" id="drawer" hidden>
  <div class="dscrim" data-dclose="1"></div>
@@ -261,18 +287,14 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
   </div>
 
   <!-- Mobile Account Actions -->
-  <div style="display:flex;flex-direction:column;gap:6px;margin:16px 0;padding-top:16px;border-top:1px solid var(--line);">
-    <button class="secondary" id="setpw-mob" style="border-radius:10px;text-align:left;padding:11px 14px;color:var(--text);font-size:14px;font-weight:650;">Set / Change Password</button>
-    <button class="secondary" id="out-mob" style="border-radius:10px;text-align:left;padding:11px 14px;color:var(--red3);font-size:14px;font-weight:650;">Sign out</button>
+  <div style="display:flex;flex-direction:column;gap:8px;margin:16px 0;padding-top:16px;border-top:1px solid var(--line);">
+    <button class="secondary" id="setpw-mob" style="border-radius:10px;text-align:left;padding:12px 14px;color:var(--text);font-size:14px;font-weight:650;">Set / Change Password</button>
+    <button class="secondary" id="out-mob" style="border-radius:10px;text-align:left;padding:12px 14px;color:var(--red3);font-size:14px;font-weight:650;">Sign out</button>
   </div>
 
   <div class="prog" id="prog2"></div>
  </nav>
 </div>
-
-   <div class="prog" id="prog2"></div>
-  </nav>
- </div>
 </main>
 </div>
 
@@ -382,13 +404,9 @@ const io="IntersectionObserver" in window?new IntersectionObserver(entries=>{
       if(el&&!el.querySelector(".pimg")) el.insertAdjacentHTML("beforeend",pimg(`https://image.tmdb.org/t/p/${r.still?"w300":"w185"}${r.p}`));}
   });
 },{rootMargin:"200px"}):null;
-// ---- player: the link comes from the player_template setting in the database ----
-// ---- player: supports both standard IMDb templates and Anime Embed (AniList) templates ----
-// ---- player: supports both standard IMDb templates and Anime Embed (AniList) templates ----
+
 function embedUrl(imdb, m, se, ep) {
   const n = v => String(Math.max(1, parseInt(v) || 1));
-
-  // 1. If the item has an AniList ID, use your exact full anime embed template
   if (m && m.anilist_id) {
     const animeTpl = settings.player_template_anime || "https://animeembed.com/embed/ani/{anilist_id}/{episode}?track=sub&autoPlay=0&muted=0&autoSkip=1&autoNext=0&start=0&accent=9b87ff";
     const epNum = m.kind === "series" ? n(ep) : "1";
@@ -398,7 +416,6 @@ function embedUrl(imdb, m, se, ep) {
     } catch { return null; }
   }
 
-  // 2. Otherwise, fall back to standard IMDb/TMDB template logic
   const tv = m && m.kind === "series", t = (tv ? settings.player_template_tv : settings.player_template) || "";
   if (!t.includes("{imdb_id}") || !/^tt\d{7,10}$/.test(imdb || "")) return null;
   try {
@@ -412,13 +429,12 @@ async function imdbOf(m){
 }
 async function play(id) {
   const m = movies.find(x => x.id === id); if (!m) return; 
-  sel = id; // Keeps the selected ID perfectly synchronized with the player
+  sel = id; 
   
   $("plt").textContent = m.title; 
   $("pl").hidden = false; 
   $("plv").textContent = "Loading…";
 
-  // Only show the in-player S/E selector if it's an ANIME title with anilist_id
   if (m.anilist_id) {
     const lim = seasonLimits(m);
     const c = curEp(id);
@@ -473,7 +489,7 @@ function loadPlayerEmbed(id) {
 
 function renderIframe(url, id, s, e) {
   const plv = $("plv");
-  plv.innerHTML = ""; // Completely destroy the old player iframe
+  plv.innerHTML = ""; 
 
   const f = document.createElement("iframe"); 
   f.src = url; 
@@ -529,8 +545,6 @@ function charsHtml(q,fp,pset,so){
   }).join("")||'<div class="empty">No characters match.</div>';
 }
 
-/* ---------- grouping and section order ---------- */
-// For You: one section per franchise. Every other tab: one section per phase / studio group.
 function groupList(list,m,so){
   const G={};
   list.forEach(x=>{
@@ -541,7 +555,6 @@ function groupList(list,m,so){
   return G;
 }
 const isDoneArr=arr=>arr.length>0&&arr.every(x=>watched.has(x.id));
-// Completed sections sink to the bottom; unfinished ones keep their normal order. For You is alphabetical by franchise.
 function orderKeys(G,m,so){
   const base=Object.keys(G);
   if(m==="foryou") return base.sort((a,b)=>{
@@ -616,7 +629,6 @@ function renderChar(c){
   side.scrollTop=keep;
 }
 
-/* ---------- main render ---------- */
 function setMode(m,fromDrawer){
   if(m==="foryou"&&!canSeeForYou) return;
 
@@ -678,7 +690,6 @@ const pct=total?Math.round(done/total*100):0;
       &&(!fr||m.frs.includes(fr))
       &&(!pset||pset.has(m.id))
       &&(!sw||(sw==="w")===watched.has(m.id)));
-    // For You is always in release order inside each franchise
     const effectiveSort=mode==="foryou"?"r":so;
     const cmp=effectiveSort==="a"?(a,b)=>a.title.localeCompare(b.title):effectiveSort==="t"?(a,b)=>(a.timeline_order??999)-(b.timeline_order??999)||rkey(a).localeCompare(rkey(b)):(a,b)=>rkey(a).localeCompare(rkey(b))||a.id-b.id;
     list.sort(cmp);
@@ -698,7 +709,6 @@ function renderRecent(){
   g.innerHTML=recent.map(({r,m},i)=>`<div class="rt rt${i+1}" data-play="${m.id}" title="${esc(m.title)}">${thumb(m,1)}<button class="rrm" data-rmrecent="${m.id}" aria-label="Remove from Continue Watching" title="Remove from Continue Watching">×</button><div class="rinfo"><b>${esc(m.title)}</b><span>${m.kind==="series"?`Season ${r.season} · Episode ${r.episode}`:esc(String(m.release_year))}</span><em>▶ Continue</em></div></div>`).join("");
   recent.forEach(({m})=>{ if(!posterSrc(m)&&!tm[m.id]) tmdb(m).then(x=>{ if(x&&x.p) renderRecent(); }); });
 }
-// Hide a title from Continue Watching (it comes back by itself the next time you press Play on it)
 async function removeRecent(id){
   const row=playHistory.find(r=>r.movie_id===id); if(!row) return;
   row.dismissed=true; renderRecent();
@@ -776,7 +786,7 @@ async function savePlay(id,s,e){
   playHistory=[{movie_id:id,season:s,episode:e,last_played_at:lastPlayedAt,dismissed:false},...playHistory.filter(r=>r.movie_id!==id)].slice(0,20);
   const row={user_id:user.id,movie_id:id,season:s,episode:e,last_played_at:lastPlayedAt};
   let {error}=await sb.from("play_state").upsert({...row,dismissed:false});
-  if(error&&/dismissed/i.test(error.message)) ({error}=await sb.from("play_state").upsert(row));   // works even before the new column exists
+  if(error&&/dismissed/i.test(error.message)) ({error}=await sb.from("play_state").upsert(row));
   if(error) console.warn(error.message);
   renderSide();
   renderRecent();
@@ -868,25 +878,25 @@ document.addEventListener("click",async e=>{
   const rv=e.target.closest("[data-reveal]"); if(rv){ revealed.add(rv.dataset.reveal); renderSide(); return; }
   const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
   const plLoad = e.target.closest("#plLoad");
-  if (plLoad && sel) {
-    const m = movies.find(x => x.id === sel);
-    if (m && m.anilist_id) {
-      const sd = $("plc");
-      const s = parseInt(sd.querySelector("#plS")?.value) || 1;
-      const ep = parseInt(sd.querySelector("#plE")?.value) || 1;
-      epSel[sel] = { s, e: ep };
-      loadPlayerEmbed(sel);
-    }
-    return;
-  }
-  const guarded=Date.now()-closedAt<450;        // ignore stray taps right after closing a panel
+  if (plLoad && sel) {
+    const m = movies.find(x => x.id === sel);
+    if (m && m.anilist_id) {
+      const sd = $("plc");
+      const s = parseInt(sd.querySelector("#plS")?.value) || 1;
+      const ep = parseInt(sd.querySelector("#plE")?.value) || 1;
+      epSel[sel] = { s, e: ep };
+      loadPlayerEmbed(sel);
+    }
+    return;
+  }
+  const guarded=Date.now()-closedAt<450;
   const nb=e.target.closest("[data-nextopen]");
-if(nb){ if(guarded) return; play(+nb.dataset.nextopen); return; }
+  if(nb){ if(guarded) return; play(+nb.dataset.nextopen); return; }
   const cc=e.target.closest("[data-char]"); if(cc){ if(guarded) return; const n=+cc.dataset.char; selChar=(selChar===n&&cc.classList.contains("ccard"))?null:n; sel=null; render(); return; }
   const gtl=e.target.closest("[data-gotitle]"); if(gtl){ if(guarded) return; sel=+gtl.dataset.gotitle; selChar=null; render(); return; }
   const b=e.target.closest("[data-id]");
   if(b){ if(guarded) return; const id=+b.dataset.id, was=watched.has(id);
-    was?watched.delete(id):watched.add(id); render();               // optimistic
+    was?watched.delete(id):watched.add(id); render();
     const r=was?await sb.from("watch_progress").delete().eq("user_id",user.id).eq("movie_id",id)
                :await sb.from("watch_progress").upsert({user_id:user.id,movie_id:id});
     if(r.error){ was?watched.add(id):watched.delete(id); render(); alert("Couldn’t save: "+r.error.message); }
@@ -910,7 +920,6 @@ if(nb){ if(guarded) return; play(+nb.dataset.nextopen); return; }
   if(c){ if(guarded) return; const id=+c.dataset.open; if(selMode){ picked.has(id)?picked.delete(id):picked.add(id); } else{ sel=sel===id?null:id; selChar=null; } render(); }
 });
 ["q","fKind","fStudio","fPhase","fFr","fPath","fStat","sort"].forEach(i=>$(i).addEventListener("input",render));
-// tap a pathway card to filter; tap it again to show everything
 document.querySelectorAll(".path").forEach(p=>p.onclick=()=>{
   const s=p.dataset.path, on=$("fPath").value===s; $("fPath").value=on?"":s; render();
   if(!on) $("modes").scrollIntoView({behavior:"smooth",block:"start"});
@@ -922,21 +931,22 @@ $("plx").onclick=()=>{$("pl").hidden=true;$("plv").textContent="";$("plc").inner
 $("selmode").onclick=()=>{selMode=!selMode;if(!selMode)picked.clear();render();};
 $("ba").onclick=()=>{LAST.forEach(m=>picked.add(m.id));render();};
 $("bw").onclick=()=>bulk(true);$("bu").onclick=()=>bulk(false);$("bc").onclick=()=>{picked.clear();render();};
+$("bdone").onclick=()=>{selMode=false;picked.clear();render();};
 document.addEventListener("change",e=>{
   const plS = e.target.closest("#plS");
-  if (plS && sel) {
-    const m = movies.find(x => x.id === sel);
-    if (m && m.anilist_id) {
-      const s = parseInt(plS.value) || 1;
-      const lim = seasonLimits(m);
-      const maxE = lim.map[s] || (Object.keys(lim.map).length === 0 && m.episodes ? m.episodes : 24);
-      const eSelect = $("plE");
-      if (eSelect) {
-        eSelect.innerHTML = Array.from({ length: maxE }, (_, i) => i + 1).map(en => `<option value="${en}">E${en}</option>`).join("");
-      }
-    }
-    return;
-  }
+  if (plS && sel) {
+    const m = movies.find(x => x.id === sel);
+    if (m && m.anilist_id) {
+      const s = parseInt(plS.value) || 1;
+      const lim = seasonLimits(m);
+      const maxE = lim.map[s] || (Object.keys(lim.map).length === 0 && m.episodes ? m.episodes : 24);
+      const eSelect = $("plE");
+      if (eSelect) {
+        eSelect.innerHTML = Array.from({ length: maxE }, (_, i) => i + 1).map(en => `<option value="${en}">E${en}</option>`).join("");
+      }
+    }
+    return;
+  }
   if(e.target.closest("[data-ep]")&&sel){ const sd=$("side"), v=k=>Math.max(1,parseInt(sd.querySelector(`[data-ep="${k}"]`).value)||1); epSel[sel]={s:v("s"),e:v("e")}; render(); return; }
   if(e.target.closest("[data-enote]")&&sel){ const c=curEp(sel); saveEp(sel,c.s,c.e,{notes:e.target.value}); return; }
   const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
@@ -947,41 +957,19 @@ if($("out-mob")) $("out-mob").onclick = handleSignOut;
 $("send").onclick=async()=>{
   const email=$("email").value.trim();
   const msg=$("msg");
-
-  if(!email){
-    msg.textContent="Enter your email first.";
-    return;
-  }
-
+  if(!email){ msg.textContent="Enter your email first."; return; }
   msg.textContent="Sending sign-in link…";
-
-  const {error}=await sb.auth.signInWithOtp({
-    email,
-    options:{
-      emailRedirectTo:location.origin+location.pathname,
-      shouldCreateUser:false
-    }
-  });
-
-  msg.textContent=error
-    ?error.message
-    :"Check your email for the sign-in link.";
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:false}});
+  msg.textContent=error?error.message:"Check your email for the sign-in link.";
 };
 
 $("go").onclick=async()=>{
   const email=$("email").value.trim();
   const password=$("pw").value;
   const msg=$("msg");
-
-  if(!email||!password){
-    msg.textContent="Enter your email and password.";
-    return;
-  }
-
+  if(!email||!password){ msg.textContent="Enter your email and password."; return; }
   msg.textContent="Signing in…";
-
   const {error}=await sb.auth.signInWithPassword({email,password});
-
   if(error){
     msg.textContent=/invalid login credentials/i.test(error.message)
       ?"Email or password doesn't match. If you originally used an email link, sign in with that link first, then set a password from the menu."
@@ -994,77 +982,29 @@ $("create").onclick=async()=>{
   const password=$("pw").value;
   const dn=$("dname").value.trim();
   const msg=$("msg");
-
-  if(!email||!password){
-    msg.textContent="Enter your email and password.";
-    return;
-  }
-
-  if(password.length<6){
-    msg.textContent="Password needs at least 6 characters.";
-    return;
-  }
-
+  if(!email||!password){ msg.textContent="Enter your email and password."; return; }
+  if(password.length<6){ msg.textContent="Password needs at least 6 characters."; return; }
   msg.textContent="Creating account…";
-
-  const {data,error}=await sb.auth.signUp({
-    email,
-    password,
-    options:{
-      data:{display_name:dn}
-    }
-  });
-
-  if(error){
-    msg.textContent=error.message;
-    return;
-  }
-
-  if(data.user&&data.user.identities?.length===0){
-    msg.textContent="An account with this email already exists. Please sign in or use the email link.";
-    return;
-  }
-
-  if(data.session){
-    location.reload();
-  }else{
-    msg.textContent="Account created! Check your email to confirm your account before signing in.";
-  }
+  const {data,error}=await sb.auth.signUp({email,password,options:{data:{display_name:dn}}});
+  if(error){ msg.textContent=error.message; return; }
+  if(data.user&&data.user.identities?.length===0){ msg.textContent="An account with this email already exists. Please sign in or use the email link."; return; }
+  if(data.session){ location.reload(); }else{ msg.textContent="Account created! Check your email to confirm your account before signing in."; }
 };
 
 const handleSetPw = async()=>{
   const password=prompt("Enter your new password (at least 6 characters):");
-
   if(password===null)return;
-
-  if(password.length<6){
-    alert("Password must have at least 6 characters.");
-    return;
-  }
-
+  if(password.length<6){ alert("Password must have at least 6 characters."); return; }
   const confirmPassword=prompt("Confirm your new password:");
-
   if(confirmPassword===null)return;
-
-  if(password!==confirmPassword){
-    alert("Passwords do not match.");
-    return;
-  }
-
+  if(password!==confirmPassword){ alert("Passwords do not match."); return; }
   const {error}=await sb.auth.updateUser({password});
-
-  if(error){
-    alert("Could not update password: "+error.message);
-  }else{
-    alert("Password updated successfully! You can now sign in using your email and password.");
-  }
+  if(error){ alert("Could not update password: "+error.message); }else{ alert("Password updated successfully! You can now sign in using your email and password."); }
 };
 $("setpw").onclick = handleSetPw;
 if($("setpw-mob")) $("setpw-mob").onclick = handleSetPw;
 
-$("pw").addEventListener("keydown",e=>{
-  if(e.key==="Enter")$("go").click();
-});
+$("pw").addEventListener("keydown",e=>{ if(e.key==="Enter")$("go").click(); });
 
 init();
 </script>
