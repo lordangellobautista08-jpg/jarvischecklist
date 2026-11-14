@@ -249,15 +249,25 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
  <div class="bulk" id="bulk" hidden><span id="bn"></span><button class="secondary" id="ba" style="border-radius:9px">Select all shown</button><button class="primary" id="bw" style="width:auto">Mark watched</button><button class="secondary" id="bu" style="border-radius:9px">Mark unwatched</button><button class="secondary" id="bc" style="border-radius:9px">Clear</button></div>
 
  <div class="drawer" id="drawer" hidden>
-  <div class="dscrim" data-dclose="1"></div>
-  <nav class="dpanel">
-   <div class="dhead"><b>Menu</b><button class="dclose" data-dclose="1" aria-label="Close menu">×</button></div>
-   <div class="dnav">
-  <button data-mode="all">All</button>
-  <button data-mode="movies">Movies</button>
-  <button data-mode="series">Series</button>
-  <button data-mode="chars">Characters</button>
-  <button data-mode="foryou" hidden>For You</button>
+ <div class="dscrim" data-dclose="1"></div>
+ <nav class="dpanel">
+  <div class="dhead"><b>Menu</b><button class="dclose" data-dclose="1" aria-label="Close menu">×</button></div>
+  <div class="dnav">
+    <button data-mode="all">All</button>
+    <button data-mode="movies">Movies</button>
+    <button data-mode="series">Series</button>
+    <button data-mode="chars">Characters</button>
+    <button data-mode="foryou" hidden>For You</button>
+  </div>
+
+  <!-- Mobile Account Actions -->
+  <div style="display:flex;flex-direction:column;gap:6px;margin:16px 0;padding-top:16px;border-top:1px solid var(--line);">
+    <button class="secondary" id="setpw-mob" style="border-radius:10px;text-align:left;padding:11px 14px;color:var(--text);font-size:14px;font-weight:650;">Set / Change Password</button>
+    <button class="secondary" id="out-mob" style="border-radius:10px;text-align:left;padding:11px 14px;color:var(--red3);font-size:14px;font-weight:650;">Sign out</button>
+  </div>
+
+  <div class="prog" id="prog2"></div>
+ </nav>
 </div>
 
    <div class="prog" id="prog2"></div>
@@ -826,7 +836,10 @@ document.addEventListener("change",e=>{
   if(e.target.closest("[data-ep]")&&sel){ const sd=$("side"), v=k=>Math.max(1,parseInt(sd.querySelector(`[data-ep="${k}"]`).value)||1); epSel[sel]={s:v("s"),e:v("e")}; render(); return; }
   if(e.target.closest("[data-enote]")&&sel){ const c=curEp(sel); saveEp(sel,c.s,c.e,{notes:e.target.value}); return; }
   const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
-$("out").onclick=async()=>{await sb.auth.signOut();location.reload();};
+const handleSignOut = async()=>{ await sb.auth.signOut(); location.reload(); };
+$("out").onclick = handleSignOut;
+if($("out-mob")) $("out-mob").onclick = handleSignOut;
+
 $("send").onclick=async()=>{
   const email=$("email").value.trim();
   const msg=$("msg");
@@ -915,7 +928,7 @@ $("create").onclick=async()=>{
   }
 };
 
-$("setpw").onclick=async()=>{
+const handleSetPw = async()=>{
   const password=prompt("Enter your new password (at least 6 characters):");
 
   if(password===null)return;
@@ -942,6 +955,8 @@ $("setpw").onclick=async()=>{
     alert("Password updated successfully! You can now sign in using your email and password.");
   }
 };
+$("setpw").onclick = handleSetPw;
+if($("setpw-mob")) $("setpw-mob").onclick = handleSetPw;
 
 $("pw").addEventListener("keydown",e=>{
   if(e.key==="Enter")$("go").click();
