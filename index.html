@@ -336,22 +336,24 @@ async function init(){
   if(!session){ $("login").hidden=false; return; }
   user=session.user; $("who").hidden=false; $("burger").hidden=false;
 
-  // 1. Fetch user profile first to get their display name/username
+  // 1. Fetch user profile, keeping their exact display name for greetings
   const p = await sb.from("profiles").select("display_name").eq("id", user.id).maybeSingle();
-  const displayName = (p.data?.display_name || "").trim().toLowerCase();
-  window.currentUsername = displayName; 
-  name = p.data?.display_name || (user.email ? user.email.split("@")[0] : "Guest");
+  const rawDisplayName = (p.data?.display_name || user.email.split("@")[0]).trim();
+  
+  window.currentUsername = rawDisplayName.toLowerCase(); // Lowercased for foolproof matching
+  name = rawDisplayName; // Exact user-typed name preserved for greetings!
 
-  // 2. Check if user has explicit exclusives or is in the whitelist
+  // 2. Check if user has explicit exclusives matching their lowercase username
   const { data: userExclusiveCheck } = await sb.from("movies")
     .select("id")
-    .contains("allowed_users", [displayName])
+    .contains("allowed_users", [window.currentUsername])
     .limit(1);
 
   canSeeForYou = Boolean(userExclusiveCheck && userExclusiveCheck.length > 0);
 
   document.querySelectorAll('[data-mode="foryou"]').forEach(btn => {
     btn.hidden = !canSeeForYou;
+    if (canSeeForYou) btn.style.display = "";
   });
 
   // 3. Fetch movies filtering public content or content containing currentUsername in allowed_users
@@ -699,7 +701,9 @@ function render(){
     $("list").innerHTML=charsHtml(q,fp,pset,so);
   } else {
     const modeOk = m => {
-      const isForUser = Array.isArray(m.allowed_users) && m.allowed_users.includes(window.currentUsername);
+      // Case-insensitive check against all items in allowed_users
+      const isForUser = Array.isArray(m.allowed_users) && 
+        m.allowed_users.map(u => u.trim().toLowerCase()).includes(window.currentUsername);
 
       if (mode === "foryou") return isForUser;
       if (isForUser) return false; 
