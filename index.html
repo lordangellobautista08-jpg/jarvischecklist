@@ -188,17 +188,30 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
 <div class="wrap">
 <header>
   <div class="hl"><button class="burger" id="burger" aria-label="Open menu" hidden>☰</button><div class="brand">FRAME <b>/</b> MARVEL ARCHIVE</div></div>
-  <div id="who" hidden><button class="pill" id="out">Sign out</button></div>
+  <div id="who" hidden style="display:flex;gap:8px">
+ <button class="pill" id="setpw">Set / Change Password</button>
+ <button class="pill" id="out">Sign out</button>
+</div>
 </header>
 
 <section id="login" class="login" hidden>
- <div class="eyebrow">Sign in</div><h1 style="font-size:30px">Your Marvel archive.</h1>
- <p class="muted">Enter your email and password. New here? Use the same form and we’ll create your account.</p>
- <label for="email">EMAIL</label><input class="field" id="email" type="email" autocomplete="email">
- <label for="pw">PASSWORD (6+ characters)</label><input class="field" id="pw" type="password" autocomplete="current-password">
- <label for="dname">DISPLAY NAME (new accounts only)</label><input class="field" id="dname" maxlength="24" placeholder="e.g. Iyo">
- <button class="primary" id="go">Continue</button>
- <button class="secondary" id="send" style="width:100%;margin-top:10px;border-radius:9px">Forgot password? Email me a sign-in link</button>
+ <div class="eyebrow">Sign in</div>
+ <h1 style="font-size:30px">Your Marvel archive.</h1>
+ <p class="muted">Sign in with your existing account, or create a new one.</p>
+
+ <label for="email">EMAIL</label>
+ <input class="field" id="email" type="email" autocomplete="email">
+
+ <label for="pw">PASSWORD (6+ characters)</label>
+ <input class="field" id="pw" type="password" autocomplete="current-password">
+
+ <label for="dname">DISPLAY NAME (new accounts only)</label>
+ <input class="field" id="dname" maxlength="24" placeholder="e.g. Iyo">
+
+ <button class="primary" id="go">Sign In</button>
+ <button class="secondary" id="create" style="width:100%;margin-top:10px;border-radius:9px">Create Account</button>
+ <button class="secondary" id="send" style="width:100%;margin-top:10px;border-radius:9px">Email me a sign-in link</button>
+
  <p class="muted" id="msg"></p>
 </section>
 
@@ -251,6 +264,7 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
   <nav class="dpanel">
    <div class="dhead"><b>Menu</b><button class="dclose" data-dclose="1" aria-label="Close menu">×</button></div>
    <div class="dnav"><button data-mode="all">All</button><button data-mode="movies">Movies</button><button data-mode="series">Series</button><button data-mode="chars">Characters</button></div>
+
    <div class="prog" id="prog2"></div>
   </nav>
  </div>
@@ -667,25 +681,125 @@ document.addEventListener("change",e=>{
   const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
 $("out").onclick=async()=>{await sb.auth.signOut();location.reload();};
 $("send").onclick=async()=>{
-  const email=$("email").value.trim(); if(!email) return;
-  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,data:{display_name:$("dname").value.trim()}}});
-  $("msg").textContent=error?error.message:"Check your email for the sign-in link.";
+  const email=$("email").value.trim();
+  const msg=$("msg");
+
+  if(!email){
+    msg.textContent="Enter your email first.";
+    return;
+  }
+
+  msg.textContent="Sending sign-in link…";
+
+  const {error}=await sb.auth.signInWithOtp({
+    email,
+    options:{
+      emailRedirectTo:location.origin+location.pathname,
+      shouldCreateUser:false
+    }
+  });
+
+  msg.textContent=error
+    ?error.message
+    :"Check your email for the sign-in link.";
 };
+
 $("go").onclick=async()=>{
-  const email=$("email").value.trim(),password=$("pw").value,dn=$("dname").value.trim(),msg=$("msg");
-  if(!email||!password){msg.textContent="Enter your email and password.";return;}
-  if(password.length<6){msg.textContent="Password needs at least 6 characters.";return;}
-  msg.textContent="Checking…";
-  let r=await sb.auth.signInWithPassword({email,password});
-  if(!r.error) return;                                   // signed in: the page reloads by itself
-  if(!/invalid login credentials/i.test(r.error.message)){msg.textContent=r.error.message;return;}
-  r=await sb.auth.signUp({email,password,options:{data:{display_name:dn}}});   // no account yet? create one
-  const exists=(r.error&&/already registered/i.test(r.error.message))||(r.data?.user&&r.data.user.identities?.length===0);
-  if(exists){msg.textContent="This email already has an account, but that password doesn’t match. Try again, or use the email link below.";return;}
-  if(r.error){msg.textContent=r.error.message;return;}
-  if(!r.data.session) msg.textContent="Account created. Check your email to confirm it, then come back and sign in.";
+  const email=$("email").value.trim();
+  const password=$("pw").value;
+  const msg=$("msg");
+
+  if(!email||!password){
+    msg.textContent="Enter your email and password.";
+    return;
+  }
+
+  msg.textContent="Signing in…";
+
+  const {error}=await sb.auth.signInWithPassword({email,password});
+
+  if(error){
+    msg.textContent=/invalid login credentials/i.test(error.message)
+      ?"Email or password doesn't match. If you originally used an email link, sign in with that link first, then set a password from the menu."
+      :error.message;
+  }
 };
-$("pw").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click();});
+
+$("create").onclick=async()=>{
+  const email=$("email").value.trim();
+  const password=$("pw").value;
+  const dn=$("dname").value.trim();
+  const msg=$("msg");
+
+  if(!email||!password){
+    msg.textContent="Enter your email and password.";
+    return;
+  }
+
+  if(password.length<6){
+    msg.textContent="Password needs at least 6 characters.";
+    return;
+  }
+
+  msg.textContent="Creating account…";
+
+  const {data,error}=await sb.auth.signUp({
+    email,
+    password,
+    options:{
+      data:{display_name:dn}
+    }
+  });
+
+  if(error){
+    msg.textContent=error.message;
+    return;
+  }
+
+  if(data.user&&data.user.identities?.length===0){
+    msg.textContent="An account with this email already exists. Please sign in or use the email link.";
+    return;
+  }
+
+  if(data.session){
+    location.reload();
+  }else{
+    msg.textContent="Account created! Check your email to confirm your account before signing in.";
+  }
+};
+
+$("setpw").onclick=async()=>{
+  const password=prompt("Enter your new password (at least 6 characters):");
+
+  if(password===null)return;
+
+  if(password.length<6){
+    alert("Password must have at least 6 characters.");
+    return;
+  }
+
+  const confirmPassword=prompt("Confirm your new password:");
+
+  if(confirmPassword===null)return;
+
+  if(password!==confirmPassword){
+    alert("Passwords do not match.");
+    return;
+  }
+
+  const {error}=await sb.auth.updateUser({password});
+
+  if(error){
+    alert("Could not update password: "+error.message);
+  }else{
+    alert("Password updated successfully! You can now sign in using your email and password.");
+  }
+};
+
+$("pw").addEventListener("keydown",e=>{
+  if(e.key==="Enter")$("go").click();
+});
+
 init();
 </script>
 </body>
