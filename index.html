@@ -329,47 +329,60 @@ let mode="all",closedAt=0,chars=[],revealed=new Set(),epWatched=new Set(),GR={},
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
-  sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user?.id!==user?.id) location.reload(); });
+  
+  // Guard the auth state change so it doesn't trigger an infinite loop before `user` is defined
+  sb.auth.onAuthStateChange((_e,s)=>{ if(user && s?.user?.id!==user?.id) location.reload(); });
+  
   if(!session){ $("login").hidden=false; return; }
   user=session.user; $("who").hidden=false; $("burger").hidden=false;
-  const [p,m,pw,w,nt,st,en,pst,ew,ch,hc]=await Promise.all([
-    sb.from("continue_hidden").select("movie_id").eq("user_id",user.id),
-    sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
-    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,is_exclusive,studios(name),movie_franchises(franchises(name))"),
-    sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
-    sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
-    sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
-    sb.from("app_settings").select("key,value"),
-    sb.from("episode_notes").select("movie_id,season,episode,rating,notes").eq("user_id",user.id),
-    sb.from("play_state").select("movie_id,season,episode,last_played_at").eq("user_id",user.id).order("last_played_at",{ascending:false,nullsFirst:false}).limit(10),
-    sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id),
-    sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no")]);
-  const displayName=(p.data?.display_name||"").trim().toLowerCase();
+  
+  try {
+    const [p,m,pw,w,nt,st,en,pst,ew,ch,hc]=await Promise.all([
+      sb.from("continue_hidden").select("movie_id").eq("user_id",user.id),
+      sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
+      sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,is_exclusive,studios(name),movie_franchises(franchises(name))"),
+      sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
+      sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
+      sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
+      sb.from("app_settings").select("key,value"),
+      sb.from("episode_notes").select("movie_id,season,episode,rating,notes").eq("user_id",user.id),
+      sb.from("play_state").select("movie_id,season,episode,last_played_at").eq("user_id",user.id).order("last_played_at",{ascending:false,nullsFirst:false}).limit(10),
+      sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id),
+      sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no")
+    ]);
+    
+    const displayName=(p.data?.display_name||"").trim().toLowerCase();
+    canSeeForYou=["jajajai","iyo","sky"].includes(displayName);
+    name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
 
-canSeeForYou=["jajajai","iyo","sky"].includes(displayName);
-
-name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
-
-document.querySelectorAll('[data-mode="foryou"]').forEach(btn=>{
-  btn.hidden=!canSeeForYou;
-});
-  movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:(x.movie_franchises||[]).map(f=>f.franchises?.name).filter(Boolean)}));
-  (st.data||[]).forEach(r=>settings[r.key]=r.value);
-  (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
-  playHistory=pst.data||[]; chars=ch.data||[];
-  hiddenContinue=new Set((hc.data||[]).map(r=>r.movie_id));
-  (ew.data||[]).forEach(r=>epWatched.add(`${r.movie_id}:${r.season}:${r.episode}`));
-  playHistory.forEach(r=>{ plays[r.movie_id]={season:r.season,episode:r.episode}; });
-  paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
-  const regularMovies=movies.filter(x=>!x.is_exclusive);
-
-fill("fStudio",[...new Set(regularMovies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
-fill("fFr",[...new Set(regularMovies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
-  fill("fPath",paths.map(p=>[p.slug,p.name]));
-  const nn=name.toLowerCase().replace(/[^a-z]/g,"");
-  const special=/^(jai|jay|jaiane|jayane|jayan|jaian|yang|buyang|jajajai)+$/.test(nn);   // add more name pieces here
-  $("greet").textContent=`Welcome back, ${name}. Ready for your next Marvel movie?`+(special?" I love you ❤️":"");
-  $("app").hidden=false; render();
+    document.querySelectorAll('[data-mode="foryou"]').forEach(btn=>{
+      btn.hidden=!canSeeForYou;
+    });
+    
+    movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:(x.movie_franchises||[]).map(f=>f.franchises?.name).filter(Boolean)}));
+    (st.data||[]).forEach(r=>settings[r.key]=r.value);
+    (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
+    playHistory=pst.data||[]; chars=ch.data||[];
+    hiddenContinue=new Set((hc.data||[]).map(r=>r.movie_id));
+    (ew.data||[]).forEach(r=>epWatched.add(`${r.movie_id}:${r.season}:${r.episode}`));
+    playHistory.forEach(r=>{ plays[r.movie_id]={season:r.season,episode:r.episode}; });
+    paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
+    
+    const regularMovies=movies.filter(x=>!x.is_exclusive);
+    fill("fStudio",[...new Set(regularMovies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
+    fill("fFr",[...new Set(regularMovies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
+    fill("fPath",paths.map(p=>[p.slug,p.name]));
+    
+    const nn=name.toLowerCase().replace(/[^a-z]/g,"");
+    const special=/^(jai|jay|jaiane|jayane|jayan|jaian|yang|buyang|jajajai)+$/.test(nn);
+    $("greet").textContent=`Welcome back, ${name}. Ready for your next Marvel movie?`+(special?" I love you ❤️":"");
+    $("app").hidden=false; 
+    render();
+  } catch(err) {
+    console.error("Database initialization failed:", err);
+    $("login").hidden = false;
+    $("msg").textContent = "Initialization error: " + err.message;
+  }
 }
 function fill(id,opts){ $(id).insertAdjacentHTML("beforeend",opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")); }
 function hue(t){let h=0;for(const c of t)h=(h*31+c.charCodeAt(0))%360;return `hsl(${h} 45% 26%)`;}
