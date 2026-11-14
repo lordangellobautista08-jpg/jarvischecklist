@@ -384,12 +384,13 @@ const io="IntersectionObserver" in window?new IntersectionObserver(entries=>{
 },{rootMargin:"200px"}):null;
 // ---- player: the link comes from the player_template setting in the database ----
 // ---- player: supports both standard IMDb templates and Anime Embed (AniList) templates ----
+// ---- player: supports both standard IMDb templates and Anime Embed (AniList) templates ----
 function embedUrl(imdb, m, se, ep) {
   const n = v => String(Math.max(1, parseInt(v) || 1));
 
-  // 1. If the item has an AniList ID, use the anime embed template
+  // 1. If the item has an AniList ID, use your exact full anime embed template
   if (m && m.anilist_id) {
-    const animeTpl = settings.player_template_anime || "https://animeembed.com/embed/ani/{anilist_id}/{episode}?track=sub&autoPlay=0";
+    const animeTpl = settings.player_template_anime || "https://animeembed.com/embed/ani/{anilist_id}/{episode}?track=sub&autoPlay=0&muted=0&autoSkip=1&autoNext=0&start=0&accent=9b87ff";
     const epNum = m.kind === "series" ? n(ep) : "1";
     try {
       const u = new URL(animeTpl.replace("{anilist_id}", m.anilist_id).replace("{episode}", epNum));
