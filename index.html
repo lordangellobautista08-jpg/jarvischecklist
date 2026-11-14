@@ -383,30 +383,14 @@ const io="IntersectionObserver" in window?new IntersectionObserver(entries=>{
   });
 },{rootMargin:"200px"}):null;
 // ---- player: the link comes from the player_template setting in the database ----
-function buildEmbedUrl(item, season = 1, episode = 1) {
-  // 1. Check if it's an Anime with an AniList ID
-  if (item.anilist_id) {
-    const animeTpl = appSettings.player_template_anime || 
-      'https://animeembed.com/embed/ani/{anilist_id}/{episode}?track=sub&autoPlay=0';
-    
-    // Movies/specials on AniList use episode 1
-    const epNum = item.kind === 'series' ? episode : 1;
-    
-    return animeTpl
-      .replace('{anilist_id}', item.anilist_id)
-      .replace('{episode}', epNum);
-  }
-
-  // 2. Fallback to your existing IMDb / TMDB template logic for non-anime
-  const baseTpl = item.kind === 'series' 
-    ? appSettings.player_template_series 
-    : appSettings.player_template;
-    
-  return baseTpl
-    .replace('{imdb_id}', item.imdb_id || '')
-    .replace('{tmdb_id}', item.tmdb_id || '')
-    .replace('{season}', season)
-    .replace('{episode}', episode);
+function embedUrl(imdb,m,se,ep){
+  const tv=m&&m.kind==="series", t=(tv?settings.player_template_tv:settings.player_template)||"";
+  if(!t.includes("{imdb_id}")||!/^tt\d{7,10}$/.test(imdb||"")) return null;
+  const n=v=>String(Math.max(1,parseInt(v)||1));
+  try{const u=new URL(t.replace("{imdb_id}",imdb).replace("{season}",n(se)).replace("{episode}",n(ep))); return u.protocol==="https:"?u.href:null;}catch{return null;}}
+async function imdbOf(m){
+  if(m.imdb_id) return m.imdb_id;
+  const r=await tmdb(m); return r&&r.imdb?r.imdb:null;
 }
 async function play(id){
   const m=movies.find(x=>x.id===id); if(!m) return; const tv=m.kind==="series";
