@@ -307,7 +307,7 @@ async function init(){
   user=session.user; $("who").hidden=false; $("burger").hidden=false;
   const [p,m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
-    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,is_exclusive,episodes,seasons,episodes_per_season,studios(name),movie_franchises(franchises(name))"),
+    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,is_exclusive,episodes,seasons,episodes_per_season,anilist_id,studios(name),movie_franchises(franchises(name))")
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
