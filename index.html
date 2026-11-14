@@ -57,28 +57,6 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .rt:hover{border-color:#56515a}
 .rt .poster{position:absolute;inset:0;aspect-ratio:auto;padding:0;border-radius:0}
 .rt .poster:before,.rt .poster i,.rt .poster b,.rt .poster em{display:none}
-.rt-remove{
-  position:absolute;
-  top:8px;
-  right:8px;
-  z-index:5;
-  width:28px;
-  height:28px;
-  border:1px solid #ffffff55;
-  border-radius:50%;
-  background:#09090bdd;
-  color:#fff;
-  font-size:19px;
-  line-height:1;
-  display:grid;
-  place-items:center;
-  opacity:.85;
-}
-.rt-remove:hover{
-  background:var(--red);
-  border-color:var(--red);
-  opacity:1;
-}
 .rinfo{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:26px 10px 8px;background:linear-gradient(180deg,transparent,#000e);display:flex;flex-direction:column;gap:1px}
 .rinfo b{font-size:13px;line-height:1.2;overflow-wrap:anywhere}.rinfo span{font-size:10px;color:#c9c9d1}.rinfo em{font-style:normal;font-size:10px;color:var(--red3);font-weight:700}
 .rt2 .rinfo,.rt3 .rinfo{padding-top:16px}.rt2 .rinfo b,.rt3 .rinfo b{font-size:11px}.rt2 .rinfo em,.rt3 .rinfo em{display:none}
@@ -325,68 +303,49 @@ function goSection(k){
   if(!el&&mode!=="all"){ mode="all"; render(); el=find(); }
   if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
 }
-let mode="all",closedAt=0,chars=[],revealed=new Set(),epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,selChar=null,notes={},selMode=false,picked=new Set(),canSeeForYou=false,hiddenContinue=new Set();
+let mode="all",closedAt=0,chars=[],revealed=new Set(),epWatched=new Set(),GR={},LAST=[],epNotes={},plays={},playHistory=[],epSel={},settings={},tm=JSON.parse(localStorage.getItem("frame_tmdb_v3")||"{}"),user,name="",movies=[],paths=[],watched=new Set(),sel=null,selChar=null,notes={},selMode=false,picked=new Set(),canSeeForYou=false;
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
-  sb.auth.onAuthStateChange((_e,s)=>{ if(user && s?.user?.id!==user?.id) location.reload(); });
-  
+  sb.auth.onAuthStateChange((_e,s)=>{ if(s?.user?.id!==user?.id) location.reload(); });
   if(!session){ $("login").hidden=false; return; }
-  user=session.user; 
-  
-  try {
-    const [p,m,pw,w,nt,st,en,pst,ew,ch,hc]=await Promise.all([
-      sb.from("continue_hidden").select("movie_id").eq("user_id",user.id).catch(()=>({data:[]})),
-      sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle().catch(()=>({data:null})),
-      sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,is_exclusive,studios(name),movie_franchises(franchises(name))").catch(()=>({data:[]})),
-      sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)").catch(()=>({data:[]})),
-      sb.from("watch_progress").select("movie_id").eq("user_id",user.id).catch(()=>({data:[]})),
-      sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id).catch(()=>({data:[]})),
-      sb.from("app_settings").select("key,value").catch(()=>({data:[]})),
-      sb.from("episode_notes").select("movie_id,season,episode,rating,notes").eq("user_id",user.id).catch(()=>({data:[]})),
-      sb.from("play_state").select("movie_id,season,episode,last_played_at").eq("user_id",user.id).order("last_played_at",{ascending:false,nullsFirst:false}).limit(10).catch(()=>({data:[]})),
-      sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id).catch(()=>({data:[]})),
-      sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no").catch(()=>({data:[]}))
-    ]);
-    
-    // Only show header and app after successful data loading
-    $("who").hidden=false; 
-    $("burger").hidden=false;
+  user=session.user; $("who").hidden=false; $("burger").hidden=false;
+  const [p,m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
+    sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
+    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,is_exclusive,studios(name),movie_franchises(franchises(name))"),
+    sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
+    sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
+    sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
+    sb.from("app_settings").select("key,value"),
+    sb.from("episode_notes").select("movie_id,season,episode,rating,notes").eq("user_id",user.id),
+    sb.from("play_state").select("movie_id,season,episode,last_played_at").eq("user_id",user.id).order("last_played_at",{ascending:false,nullsFirst:false}).limit(10),
+    sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id),
+    sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no")]);
+  const displayName=(p.data?.display_name||"").trim().toLowerCase();
 
-    const displayName=(p.data?.display_name||"").trim().toLowerCase();
-    canSeeForYou=["jajajai","iyo","sky"].includes(displayName);
-    name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
+canSeeForYou=["jajajai","iyo","sky"].includes(displayName);
 
-    document.querySelectorAll('[data-mode="foryou"]').forEach(btn=>{
-      btn.hidden=!canSeeForYou;
-    });
-    
-    movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:(x.movie_franchises||[]).map(f=>f.franchises?.name).filter(Boolean)}));
-    (st.data||[]).forEach(r=>settings[r.key]=r.value);
-    (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
-    playHistory=pst.data||[]; chars=ch.data||[];
-    hiddenContinue=new Set((hc.data||[]).map(r=>r.movie_id));
-    (ew.data||[]).forEach(r=>epWatched.add(`${r.movie_id}:${r.season}:${r.episode}`));
-    playHistory.forEach(r=>{ plays[r.movie_id]={season:r.season,episode:r.episode}; });
-    paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
-    
-    const regularMovies=movies.filter(x=>!x.is_exclusive);
-    fill("fStudio",[...new Set(regularMovies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
-    fill("fFr",[...new Set(regularMovies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
-    fill("fPath",paths.map(p=>[p.slug,p.name]));
-    
-    const nn=name.toLowerCase().replace(/[^a-z]/g,"");
-    const special=/^(jai|jay|jaiane|jayane|jayan|jaian|yang|buyang|jajajai)+$/.test(nn);
-    $("greet").textContent=`Welcome back, ${name}. Ready for your next Marvel movie?`+(special?" I love you ❤️":"");
-    $("app").hidden=false; 
-    render();
-  } catch(err) {
-    console.error("Database initialization failed:", err);
-    $("login").hidden = false;
-    $("who").hidden = true;
-    $("burger").hidden = true;
-    $("msg").textContent = "Initialization error: " + err.message;
-  }
+name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
+
+document.querySelectorAll('[data-mode="foryou"]').forEach(btn=>{
+  btn.hidden=!canSeeForYou;
+});
+  movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:(x.movie_franchises||[]).map(f=>f.franchises?.name).filter(Boolean)}));
+  (st.data||[]).forEach(r=>settings[r.key]=r.value);
+  (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
+  playHistory=pst.data||[]; chars=ch.data||[];
+  (ew.data||[]).forEach(r=>epWatched.add(`${r.movie_id}:${r.season}:${r.episode}`));
+  playHistory.forEach(r=>{ plays[r.movie_id]={season:r.season,episode:r.episode}; });
+  paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
+  const regularMovies=movies.filter(x=>!x.is_exclusive);
+
+fill("fStudio",[...new Set(regularMovies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
+fill("fFr",[...new Set(regularMovies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
+  fill("fPath",paths.map(p=>[p.slug,p.name]));
+  const nn=name.toLowerCase().replace(/[^a-z]/g,"");
+  const special=/^(jai|jay|jaiane|jayane|jayan|jaian|yang|buyang|jajajai)+$/.test(nn);   // add more name pieces here
+  $("greet").textContent=`Welcome back, ${name}. Ready for your next Marvel movie?`+(special?" I love you ❤️":"");
+  $("app").hidden=false; render();
 }
 function fill(id,opts){ $(id).insertAdjacentHTML("beforeend",opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")); }
 function hue(t){let h=0;for(const c of t)h=(h*31+c.charCodeAt(0))%360;return `hsl(${h} 45% 26%)`;}
@@ -620,31 +579,11 @@ const pct=total?Math.round(done/total*100):0;
   $("bulk").hidden=!selMode; $("bn").textContent=picked.size+" selected";
 }
 function renderRecent(){
-  const recent=playHistory
-    .map(r=>({r,m:movies.find(x=>x.id===r.movie_id)}))
-    .filter(x=>x.m&&x.m.kind!=="assembled"&&!hiddenContinue.has(x.m.id))
-    .slice(0,3);
-
+  const recent=playHistory.map(r=>({r,m:movies.find(x=>x.id===r.movie_id)})).filter(x=>x.m&&x.m.kind!=="assembled").slice(0,3);
   $("recentSection").hidden=!recent.length;
-  const g=$("recentList");
-  g.className="rgrid n"+recent.length;
-
-  g.innerHTML=recent.map(({r,m},i)=>`
-    <div class="rt rt${i+1}" data-play="${m.id}" title="${esc(m.title)}">
-      ${thumb(m,1)}
-      <div class="rinfo">
-        <b>${esc(m.title)}</b>
-        <span>${m.kind==="series"?`Season ${r.season} · Episode ${r.episode}`:esc(String(m.release_year))}</span>
-        <em>▶ Continue</em>
-      </div>
-      <button class="rt-remove" data-remove-continue="${m.id}" title="Remove from Continue" aria-label="Remove ${esc(m.title)} from Continue">×</button>
-    </div>
-  `).join("");
-
-  recent.forEach(({m})=>{
-    if(!posterSrc(m)&&!tm[m.id])
-      tmdb(m).then(x=>{if(x&&x.p)renderRecent();});
-  });
+  const g=$("recentList"); g.className="rgrid n"+recent.length;
+  g.innerHTML=recent.map(({r,m},i)=>`<div class="rt rt${i+1}" data-play="${m.id}" title="${esc(m.title)}">${thumb(m,1)}<div class="rinfo"><b>${esc(m.title)}</b><span>${m.kind==="series"?`Season ${r.season} · Episode ${r.episode}`:esc(String(m.release_year))}</span><em>▶ Continue</em></div></div>`).join("");
+  recent.forEach(({m})=>{ if(!posterSrc(m)&&!tm[m.id]) tmdb(m).then(x=>{ if(x&&x.p) renderRecent(); }); });
 }
 function nextFor(slug){
   const p=paths.find(x=>x.slug===slug); if(!p) return null;
@@ -717,14 +656,6 @@ async function savePlay(id,s,e){
   playHistory=[{movie_id:id,season:s,episode:e,last_played_at:lastPlayedAt},...playHistory.filter(r=>r.movie_id!==id)].slice(0,3);
   const {error}=await sb.from("play_state").upsert({user_id:user.id,movie_id:id,season:s,episode:e,last_played_at:lastPlayedAt});
   if(error) console.warn(error.message);
-  if(hiddenContinue.has(id)){
-  const {error:hideError}=await sb.from("continue_hidden")
-    .delete()
-    .eq("user_id",user.id)
-    .eq("movie_id",id);
-
-  if(!hideError) hiddenContinue.delete(id);
-}
   renderSide();
   renderRecent();
 }
@@ -776,29 +707,7 @@ document.addEventListener("click",async e=>{
   const gt=e.target.closest("[data-goto]"); if(gt){ $("drawer").hidden=true; goSection(gt.dataset.goto); return; }
   if(e.target.closest("[data-close]")){ sel=null; selChar=null; closedAt=Date.now(); render(); return; }
   const rv=e.target.closest("[data-reveal]"); if(rv){ revealed.add(rv.dataset.reveal); renderSide(); return; }
-  const removeContinue=e.target.closest("[data-remove-continue]");
-if(removeContinue){
-  e.stopPropagation();
-
-  const id=+removeContinue.dataset.removeContinue;
-
-  const {error}=await sb.from("continue_hidden").upsert({
-    user_id:user.id,
-    movie_id:id
-  });
-
-  if(error){
-    alert("Couldn't remove title: "+error.message);
-    return;
-  }
-
-  hiddenContinue.add(id);
-  renderRecent();
-  return;
-}
-
-const pl=e.target.closest("[data-play]");
-if(pl){ play(+pl.dataset.play); return; }
+  const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
   const guarded=Date.now()-closedAt<450;        // ignore stray taps right after closing a panel
   const nb=e.target.closest("[data-nextopen]");
 if(nb){ if(guarded) return; play(+nb.dataset.nextopen); return; }
