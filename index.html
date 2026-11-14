@@ -412,6 +412,7 @@ async function imdbOf(m){
 }
 async function play(id) {
   const m = movies.find(x => x.id === id); if (!m) return; 
+  sel = id; // Keeps the selected ID perfectly synchronized with the player
   
   $("plt").textContent = m.title; 
   $("pl").hidden = false; 
