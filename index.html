@@ -977,9 +977,27 @@ document.addEventListener("change",e=>{
   if(e.target.closest("[data-ep]")&&sel){ const sd=$("side"), v=k=>Math.max(1,parseInt(sd.querySelector(`[data-ep="${k}"]`).value)||1); epSel[sel]={s:v("s"),e:v("e")}; render(); return; }
   if(e.target.closest("[data-enote]")&&sel){ const c=curEp(sel); saveEp(sel,c.s,c.e,{notes:e.target.value}); return; }
   const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
-const handleSignOut = async()=>{ await sb.auth.signOut(); location.reload(); };
+const handleSignOut = async () => { 
+  try {
+    await sb.auth.signOut();
+  } catch (err) {
+    console.error("Sign out error:", err);
+  } finally {
+    localStorage.clear();
+    sessionStorage.clear();
+    location.reload();
+  }
+};
+
 $("out").onclick = handleSignOut;
-if($("out-mob")) $("out-mob").onclick = handleSignOut;
+const outMob = $("out-mob");
+if (outMob) {
+  outMob.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleSignOut();
+  });
+}
 
 $("send").onclick=async()=>{
   const email=$("email").value.trim();
