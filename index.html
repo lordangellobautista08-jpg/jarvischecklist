@@ -161,14 +161,22 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
   .x{width:46px;height:46px;font-size:28px}
   aside .cbig{width:82px;height:82px}aside h3{font-size:18px}aside .syn{font-size:12px;line-height:1.55}
 
-  /* Responsive Player Bar & Controls scaling on Mobile */
-  .plbar{flex-wrap:wrap;gap:6px;padding:0 2px;}
-  #plx{font-size:11px;padding:6px 10px;height:32px;}
-  #plt{font-size:11px;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  #plc{font-size:11px;gap:3px;}
+  /* Scaled-down Header Account Buttons on Mobile */
+  header{gap:6px;margin-bottom:18px;}
+  .hl{gap:8px;min-width:0;}
+  .brand{font-size:11px;letter-spacing:.1em;white-space:nowrap;}
+  .burger{width:34px;height:34px;font-size:17px;border-radius:8px;flex-shrink:0;}
+  #who{gap:4px!important;flex-shrink:0;}
+  #who .pill{padding:5px 8px;font-size:10px;white-space:nowrap;}
+
+  /* Responsive Player Bar & Title Wrapping on Mobile */
+  .plbar{flex-wrap:wrap;gap:6px;padding:0 2px;align-items:center;}
+  #plx{font-size:11px;padding:5px 9px;height:30px;order:1;}
+  #plc{font-size:11px;gap:3px;order:2;margin-left:auto;}
   #plc span{font-size:10px;}
-  #plc select.mini{min-width:48px;padding:4px 4px;font-size:11px;margin:0 2px 0 1px;border-radius:6px;}
-  #plLoad{padding:4px 8px!important;font-size:10px!important;height:28px;}
+  #plc select.mini{min-width:44px;padding:3px 4px;font-size:11px;margin:0 2px 0 1px;border-radius:6px;}
+  #plLoad{padding:4px 8px!important;font-size:10px!important;height:26px;}
+  #plt{order:3;flex-basis:100%;max-width:100%;font-size:12px;font-weight:600;color:var(--text);white-space:normal;line-height:1.25;margin-top:2px;}
 
   /* Scaled-down Bulk Bar on Mobile */
   .bulk{padding:8px 10px;gap:6px;bottom:12px;border-radius:12px;}
