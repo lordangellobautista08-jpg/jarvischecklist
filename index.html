@@ -337,7 +337,14 @@ async function init(){
   user=session.user; $("who").hidden=false; $("burger").hidden=false;
   const [p,m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
     sb.from("profiles").select("display_name").eq("id",user.id).maybeSingle(),
-    sb.from("movies").select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,is_exclusive,episodes,seasons,episodes_per_season,anilist_id,studios(name),movie_franchises(franchises(name))"),
+    // 1. Fetch user profile first to get their display name/username
+const p = await sb.from("profiles").select("display_name").eq("id", user.id).maybeSingle();
+const currentUsername = (p.data?.display_name || "").trim().toLowerCase();
+
+// 2. Fetch movies filtering public content or content containing currentUsername in allowed_users
+const m = await sb.from("movies")
+  .select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,allowed_users,episodes,seasons,episodes_per_season,anilist_id,studios(name),movie_franchises(franchises(name))")
+  .or(`allowed_users.eq.{},allowed_users.cs.{"${currentUsername}"}`);
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
@@ -346,15 +353,22 @@ async function init(){
     sb.from("play_state").select("*").eq("user_id",user.id).order("last_played_at",{ascending:false,nullsFirst:false}).limit(20),
     sb.from("episode_watched").select("movie_id,season,episode").eq("user_id",user.id),
     sb.from("characters").select("*,character_titles(movie_id,is_first)").order("no")]);
-  const displayName=(p.data?.display_name||"").trim().toLowerCase();
+  // 1. Set global currentUsername and name
+  const displayName = (p.data?.display_name || "").trim().toLowerCase();
+  window.currentUsername = displayName; // Makes it globally accessible
+  name = p.data?.display_name || (user.email ? user.email.split("@")[0] : "Guest");
 
-canSeeForYou=["jajajai","iyo","sky"].includes(displayName);
+  // 2. Check if user has explicit exclusives or is in the whitelist
+  const { data: userExclusiveCheck } = await sb.from("movies")
+    .select("id")
+    .contains("allowed_users", [displayName])
+    .limit(1);
 
-name=p.data?.display_name||(user.email?user.email.split("@")[0]:"Guest");
+  canSeeForYou = ["jajajai", "iyo", "sky"].includes(displayName) || (userExclusiveCheck && userExclusiveCheck.length > 0);
 
-document.querySelectorAll('[data-mode="foryou"]').forEach(btn=>{
-  btn.hidden=!canSeeForYou;
-});
+  document.querySelectorAll('[data-mode="foryou"]').forEach(btn => {
+    btn.hidden = !canSeeForYou;
+  });
   movies=(m.data||[]).map(x=>({...x,studio:x.studios?.name||"",frs:(x.movie_franchises||[]).map(f=>f.franchises?.name).filter(Boolean)}));
   (st.data||[]).forEach(r=>settings[r.key]=r.value);
   (en.data||[]).forEach(r=>epNotes[`${r.movie_id}:${r.season}:${r.episode}`]={rating:r.rating===null?null:+r.rating,notes:r.notes});
@@ -362,7 +376,7 @@ document.querySelectorAll('[data-mode="foryou"]').forEach(btn=>{
   (ew.data||[]).forEach(r=>epWatched.add(`${r.movie_id}:${r.season}:${r.episode}`));
   playHistory.forEach(r=>{ plays[r.movie_id]={season:r.season,episode:r.episode}; });
   paths=pw.data||[]; (nt.data||[]).forEach(r=>notes[r.movie_id]={rating:r.rating===null?null:+r.rating,notes:r.notes}); watched=new Set((w.data||[]).map(r=>r.movie_id));
-  const regularMovies=movies.filter(x=>!x.is_exclusive);
+  const regularMovies=movies.filter(x=>!x.allowed_users || x.allowed_users.length===0);
 
 fill("fStudio",[...new Set(regularMovies.map(x=>x.studio).filter(Boolean))].sort().map(s=>[s,s]));
 fill("fFr",[...new Set(regularMovies.flatMap(x=>x.frs))].sort().map(s=>[s,s]));
@@ -666,7 +680,7 @@ if(mode==="foryou") $("fpanel").hidden=true;
 }
 function render(){
   applyTheme();
-  const regularMovies=movies.filter(m=>!m.is_exclusive);
+  const regularMovies=movies.filter(m=>!m.allowed_users || m.allowed_users.length===0);
 const total=regularMovies.length;
 const done=regularMovies.filter(m=>watched.has(m.id)).length;
 const pct=total?Math.round(done/total*100):0;
@@ -681,16 +695,18 @@ const pct=total?Math.round(done/total*100):0;
     GR={}; LAST=[];
     $("list").innerHTML=charsHtml(q,fp,pset,so);
   } else {
-    const modeOk=m=>{
-  if(mode==="foryou") return !!m.is_exclusive;
-  if(m.is_exclusive) return false;
+    const modeOk = m => {
+      const isForUser = Array.isArray(m.allowed_users) && m.allowed_users.includes(window.currentUsername);
 
-  return mode==="movies"
-    ?m.kind==="movie"
-    :mode==="series"
-      ?m.kind!=="movie"
-      :true;
-};
+      if (mode === "foryou") return isForUser;
+      if (isForUser) return false; // Hides personal exclusive items from public tabs
+
+      return mode === "movies"
+        ? m.kind === "movie"
+        : mode === "series"
+          ? m.kind !== "movie"
+          : true;
+    };
     const list=movies.filter(m=>modeOk(m)&&(!q||m.title.toLowerCase().includes(q)||String(m.release_year).includes(q))
       &&(!kf||(kf==="ss"?["short","special"].includes(m.kind):m.kind===kf))
       &&(!st||m.studio===st)
@@ -744,7 +760,7 @@ function renderNext(){
   if(!src&&!tm[n.m.id]) tmdb(n.m).then(x=>{ if(x&&x.p) renderNext(); });
 }
 function renderProg(){
-  const regularMovies=movies.filter(m=>!m.is_exclusive);
+  const regularMovies=movies.filter(m=>!m.allowed_users || m.allowed_users.length===0);
 
   const row=(n,w,t,g)=>`<div class="pr go" data-goto="${esc(g||n)}"><div><span>${esc(n)}</span><b>${w}/${t}</b></div><div class="track"><div class="fill" style="width:${t?Math.round(w/t*100):0}%"></div></div></div>`;
 
