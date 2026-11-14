@@ -461,13 +461,22 @@ function orderKeys(G,m,so){
   if(so==="t") return base;
   return [...base.filter(k=>!isDoneArr(G[k])),...base.filter(k=>isDoneArr(G[k]))];
 }
+
+function formatFranchiseTitle(fr) {
+  if (fr === "Other") return "Other Universe";
+  const norm = fr.trim();
+  if (/^attack on titan$/i.test(norm) || /^aot$/i.test(norm)) return "AOT Universe";
+  return norm + " Universe";
+}
+
 function sectionHtml(k,arr,done){
   const isPh=PHASES.includes(k);
+  const displayTitle = mode === "foryou" ? formatFranchiseTitle(k) : k;
   const activeSlug=$("fPath").value;
   const activePath=activeSlug?paths.find(p=>p.slug===activeSlug):null;
   const recoSet=activePath?new Set(activePath.pathway_movies.filter(pm=>pm.viewing_type==="recommended").map(pm=>pm.movie_id)):new Set();
   const optSet=activePath?new Set(activePath.pathway_movies.filter(pm=>pm.viewing_type==="optional").map(pm=>pm.movie_id)):new Set();
-  return `<section data-sec="${esc(k)}" class="${done?"cdone":""}"><div class="sec"><h2 class="${isPh||k.startsWith("MCU")?"mcu":""}">${esc(k)}</h2><span>${arr.filter(m=>watched.has(m.id)).length} / ${arr.length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
+  return `<section data-sec="${esc(k)}" class="${done?"cdone":""}"><div class="sec"><h2 class="${isPh||k.startsWith("MCU")?"mcu":""}">${esc(displayTitle)}</h2><span>${arr.filter(m=>watched.has(m.id)).length} / ${arr.length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
    <div class="grid">${arr.map(m=>{const d=watched.has(m.id),rc=!d&&recoSet.has(m.id),op=!d&&optSet.has(m.id);return `<article class="card ${d?"done":""} ${rc?"reco":""} ${op?"opt":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`;}).join("")}</div></section>`;
 }
 function listHtml(G,m,so){
