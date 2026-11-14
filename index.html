@@ -336,33 +336,29 @@ async function init(){
   if(!session){ $("login").hidden=false; return; }
   user=session.user; $("who").hidden=false; $("burger").hidden=false;
 
-  // 1. Get email from Auth AND display_name from profiles so greetings work properly
-  const userEmail = (user.email || "").trim().toLowerCase();
-  const { data: prof } = await sb.from("profiles").select("display_name").eq("id", user.id).single();
-  
-  const displayName = (prof?.display_name || userEmail.split("@")[0] || "Guest").trim();
-  window.currentUsername = displayName.toLowerCase();
-  window.currentUserEmail = userEmail;
-  name = displayName; // Keeps your homepage greetings showing their username!
+  // 1. Fetch user profile first to get their display name/username
+  const p = await sb.from("profiles").select("display_name").eq("id", user.id).maybeSingle();
+  const displayName = (p.data?.display_name || "").trim().toLowerCase();
+  window.currentUsername = displayName; 
+  name = p.data?.display_name || (user.email ? user.email.split("@")[0] : "Guest");
 
-  // 2. Check if user has exclusives matching EITHER their email in allowed_emails OR username in allowed_users
+  // 2. Check if user has explicit exclusives or is in the whitelist
   const { data: userExclusiveCheck } = await sb.from("movies")
     .select("id")
-    .or(`allowed_emails.cs.{"${userEmail}"},allowed_users.cs.{"${window.currentUsername}"}`)
+    .contains("allowed_users", [displayName])
     .limit(1);
 
   canSeeForYou = Boolean(userExclusiveCheck && userExclusiveCheck.length > 0);
 
   document.querySelectorAll('[data-mode="foryou"]').forEach(btn => {
     btn.hidden = !canSeeForYou;
-    if (canSeeForYou) btn.style.display = "";
   });
 
-  // 3. Fetch movies filtering public content or content containing userEmail in allowed_users
+  // 3. Fetch movies filtering public content or content containing currentUsername in allowed_users
   const [m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
     sb.from("movies")
-      .select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,allowed_users,allowed_emails,episodes,seasons,episodes_per_season,anilist_id,studios(name),movie_franchises(franchises(name))"),
-      .or(`allowed_users.eq.{},allowed_users.cs.{"${userEmail}"}`),
+      .select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,allowed_users,episodes,seasons,episodes_per_season,anilist_id,studios(name),movie_franchises(franchises(name))")
+      .or(`allowed_users.eq.{},allowed_users.cs.{"${displayName}"}`),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
@@ -703,15 +699,10 @@ function render(){
     $("list").innerHTML=charsHtml(q,fp,pset,so);
   } else {
     const modeOk = m => {
-      const isForUser =
-        (Array.isArray(m.allowed_emails) && m.allowed_emails.some(e => e.toLowerCase() === window.currentUserEmail)) ||
-        (Array.isArray(m.allowed_users) && m.allowed_users.some(u => u.toLowerCase() === window.currentUsername));
+      const isForUser = Array.isArray(m.allowed_users) && m.allowed_users.includes(window.currentUsername);
 
       if (mode === "foryou") return isForUser;
-
-      // Keeps all public movies/series visible on the main tabs
-      const isPublic = (!m.allowed_emails || m.allowed_emails.length === 0) && (!m.allowed_users || m.allowed_users.length === 0);
-      if (!isPublic && !isForUser) return false;
+      if (isForUser) return false; 
 
       return mode === "movies"
         ? m.kind === "movie"
@@ -986,27 +977,9 @@ document.addEventListener("change",e=>{
   if(e.target.closest("[data-ep]")&&sel){ const sd=$("side"), v=k=>Math.max(1,parseInt(sd.querySelector(`[data-ep="${k}"]`).value)||1); epSel[sel]={s:v("s"),e:v("e")}; render(); return; }
   if(e.target.closest("[data-enote]")&&sel){ const c=curEp(sel); saveEp(sel,c.s,c.e,{notes:e.target.value}); return; }
   const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
-const handleSignOut = async () => { 
-  try {
-    await sb.auth.signOut();
-  } catch (err) {
-    console.error("Sign out error:", err);
-  } finally {
-    localStorage.clear();
-    sessionStorage.clear();
-    location.reload();
-  }
-};
-
+const handleSignOut = async()=>{ await sb.auth.signOut(); location.reload(); };
 $("out").onclick = handleSignOut;
-const outMob = $("out-mob");
-if (outMob) {
-  outMob.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleSignOut();
-  });
-}
+if($("out-mob")) $("out-mob").onclick = handleSignOut;
 
 $("send").onclick=async()=>{
   const email=$("email").value.trim();
