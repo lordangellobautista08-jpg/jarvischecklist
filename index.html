@@ -410,19 +410,75 @@ async function imdbOf(m){
   if(m.imdb_id) return m.imdb_id;
   const r=await tmdb(m); return r&&r.imdb?r.imdb:null;
 }
-async function play(id){
-  const m=movies.find(x=>x.id===id); if(!m) return; const tv=m.kind==="series";
-  $("plt").textContent=m.title; $("plc").innerHTML=""; $("pl").hidden=false; $("plv").textContent="Loading…";
-  if(!(tv?settings.player_template_tv:settings.player_template)){$("plv").textContent="The player isn’t set up yet. A source link still needs to be added.";return;}
-  const imdb=await imdbOf(m);
-  if(!imdb){$("plv").textContent="No IMDb ID for this title yet, so it can’t be played.";return;}
-  const c=tv?curEp(id):{s:1,e:1};
-  const url=embedUrl(imdb,m,c.s,c.e);
-  if(!url){$("plv").textContent="The player link isn’t set up correctly. Check the player_template setting.";return;}
-  const f=document.createElement("iframe"); f.src=url; f.allowFullscreen=true; f.referrerPolicy="no-referrer";
-  f.setAttribute("allow","fullscreen; encrypted-media");
-  $("plv").textContent=""; $("plv").appendChild(f);
-  savePlay(id,c.s,c.e);
+async function play(id) {
+  const m = movies.find(x => x.id === id); if (!m) return; 
+  
+  $("plt").textContent = m.title; 
+  $("pl").hidden = false; 
+  $("plv").textContent = "Loading…";
+
+  // Only show the in-player S/E selector if it's an ANIME title with anilist_id
+  if (m.anilist_id) {
+    const lim = seasonLimits(m);
+    const c = curEp(id);
+    const s = lim.maxS ? Math.min(lim.maxS, Math.max(lim.minS, c.s)) : Math.max(1, c.s);
+    const maxE = lim.map[s] || (Object.keys(lim.map).length === 0 && m.episodes ? m.episodes : 24);
+    const e = Math.min(maxE, Math.max(1, c.e));
+    epSel[id] = { s, e };
+
+    const seasonList = Object.keys(lim.map).length
+      ? Object.keys(lim.map).map(Number).sort((a, b) => a - b)
+      : Array.from({ length: Math.max(s, 1) }, (_, i) => i + 1);
+
+    const sOpts = seasonList.map(sn => `<option value="${sn}" ${sn === s ? "selected" : ""}>S${sn}</option>`).join("");
+    const eOpts = Array.from({ length: maxE }, (_, i) => i + 1).map(en => `<option value="${en}" ${en === e ? "selected" : ""}>E${en}</option>`).join("");
+
+    $("plc").innerHTML = `
+      <span>S</span><select class="mini" id="plS">${sOpts}</select>
+      <span>E</span><select class="mini" id="plE">${eOpts}</select>
+      <button class="secondary" id="plLoad" style="padding:4px 10px;border-radius:6px;font-size:11px">Load</button>
+    `;
+  } else {
+    $("plc").innerHTML = "";
+  }
+
+  loadPlayerEmbed(id);
+}
+
+function loadPlayerEmbed(id) {
+  const m = movies.find(x => x.id === id); if (!m) return;
+  const c = m.anilist_id ? curEp(id) : { s: 1, e: 1 };
+
+  if (m.anilist_id) {
+    const url = embedUrl(null, m, c.s, c.e);
+    if (!url) { $("plv").textContent = "The anime player link isn’t set up correctly."; return; }
+    renderIframe(url, id, c.s, c.e);
+    return;
+  }
+
+  const tv = m.kind === "series";
+  if (!(tv ? settings.player_template_tv : settings.player_template)) {
+    $("plv").textContent = "The player isn’t set up yet. A source link still needs to be added.";
+    return;
+  }
+
+  imdbOf(m).then(imdb => {
+    if (!imdb) { $("plv").textContent = "No IMDb ID for this title yet, so it can’t be played."; return; }
+    const url = embedUrl(imdb, m, c.s, c.e);
+    if (!url) { $("plv").textContent = "The player link isn’t set up correctly."; return; }
+    renderIframe(url, id, c.s, c.e);
+  });
+}
+
+function renderIframe(url, id, s, e) {
+  const f = document.createElement("iframe"); 
+  f.src = url; 
+  f.allowFullscreen = true; 
+  f.referrerPolicy = "no-referrer";
+  f.setAttribute("allow", "fullscreen; encrypted-media");
+  $("plv").textContent = ""; 
+  $("plv").appendChild(f);
+  savePlay(id, s, e);
 }
 
 /* ---------- characters ---------- */
@@ -807,6 +863,18 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("[data-close]")){ sel=null; selChar=null; closedAt=Date.now(); render(); return; }
   const rv=e.target.closest("[data-reveal]"); if(rv){ revealed.add(rv.dataset.reveal); renderSide(); return; }
   const pl=e.target.closest("[data-play]"); if(pl){ play(+pl.dataset.play); return; }
+  const plLoad = e.target.closest("#plLoad");
+  if (plLoad && sel) {
+    const m = movies.find(x => x.id === sel);
+    if (m && m.anilist_id) {
+      const sd = $("plc");
+      const s = parseInt(sd.querySelector("#plS")?.value) || 1;
+      const ep = parseInt(sd.querySelector("#plE")?.value) || 1;
+      epSel[sel] = { s, e: ep };
+      loadPlayerEmbed(sel);
+    }
+    return;
+  }
   const guarded=Date.now()-closedAt<450;        // ignore stray taps right after closing a panel
   const nb=e.target.closest("[data-nextopen]");
 if(nb){ if(guarded) return; play(+nb.dataset.nextopen); return; }
@@ -851,6 +919,20 @@ $("selmode").onclick=()=>{selMode=!selMode;if(!selMode)picked.clear();render();}
 $("ba").onclick=()=>{LAST.forEach(m=>picked.add(m.id));render();};
 $("bw").onclick=()=>bulk(true);$("bu").onclick=()=>bulk(false);$("bc").onclick=()=>{picked.clear();render();};
 document.addEventListener("change",e=>{
+  const plS = e.target.closest("#plS");
+  if (plS && sel) {
+    const m = movies.find(x => x.id === sel);
+    if (m && m.anilist_id) {
+      const s = parseInt(plS.value) || 1;
+      const lim = seasonLimits(m);
+      const maxE = lim.map[s] || (Object.keys(lim.map).length === 0 && m.episodes ? m.episodes : 24);
+      const eSelect = $("plE");
+      if (eSelect) {
+        eSelect.innerHTML = Array.from({ length: maxE }, (_, i) => i + 1).map(en => `<option value="${en}">E${en}</option>`).join("");
+      }
+    }
+    return;
+  }
   if(e.target.closest("[data-ep]")&&sel){ const sd=$("side"), v=k=>Math.max(1,parseInt(sd.querySelector(`[data-ep="${k}"]`).value)||1); epSel[sel]={s:v("s"),e:v("e")}; render(); return; }
   if(e.target.closest("[data-enote]")&&sel){ const c=curEp(sel); saveEp(sel,c.s,c.e,{notes:e.target.value}); return; }
   const t=e.target.closest("[data-note]");if(t)saveNote(+t.dataset.note,{notes:t.value});});
