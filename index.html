@@ -348,7 +348,7 @@ async function init(){
     .contains("allowed_users", [displayName])
     .limit(1);
 
-  canSeeForYou = ["jajajai", "iyo", "sky"].includes(displayName) || (userExclusiveCheck && userExclusiveCheck.length > 0);
+  canSeeForYou = Boolean(userExclusiveCheck && userExclusiveCheck.length > 0);
 
   document.querySelectorAll('[data-mode="foryou"]').forEach(btn => {
     btn.hidden = !canSeeForYou;
