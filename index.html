@@ -360,7 +360,7 @@ async function init(){
   const [m,pw,w,nt,st,en,pst,ew,ch]=await Promise.all([
     sb.from("movies")
       .select("id,title,release_year,release_date,phase,timeline_order,world_year,kind,imdb_id,tmdb_id,custom_poster,synopsis,allowed_users,episodes,seasons,episodes_per_season,anilist_id,studios(name),movie_franchises(franchises(name))")
-      .or(`allowed_users.eq.{},allowed_users.cs.{"${displayName}"}`),
+      .or(`allowed_users.eq.{},allowed_users.cs.{"${window.currentUsername}"}`),
     sb.from("pathways").select("id,slug,name,pathway_movies(movie_id,sequence_number,viewing_type)"),
     sb.from("watch_progress").select("movie_id").eq("user_id",user.id),
     sb.from("movie_notes").select("movie_id,rating,notes").eq("user_id",user.id),
