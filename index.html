@@ -456,7 +456,13 @@ const isDoneArr=arr=>arr.length>0&&arr.every(x=>watched.has(x.id));
 // Completed sections sink to the bottom; unfinished ones keep their normal order. For You is alphabetical by franchise.
 function orderKeys(G,m,so){
   const base=Object.keys(G);
-  if(m==="foryou") return base.sort((a,b)=>a==="Other"?1:b==="Other"?-1:a.localeCompare(b));
+  if(m==="foryou") return base.sort((a,b)=>{
+    if(a==="Live-Action Adaptation") return -1;
+    if(b==="Live-Action Adaptation") return 1;
+    if(a==="Other") return 1;
+    if(b==="Other") return -1;
+    return a.localeCompare(b);
+  });
   base.sort((a,b)=>{const f=k=>k.startsWith("MCU")?-1:ORDER.indexOf(k);return f(a)-f(b);});
   if(so==="t") return base;
   return [...base.filter(k=>!isDoneArr(G[k])),...base.filter(k=>isDoneArr(G[k]))];
