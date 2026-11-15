@@ -464,7 +464,8 @@ async function play(id) {
   $("pl").hidden = false; 
   $("plv").textContent = "Loading…";
 
-  if (m.anilist_id) {
+  // Updated: Only show the episode picker if it's a series
+  if (m.anilist_id && m.kind === "series") {
     const maxE = m.episodes || 24;
     const c = curEp(id);
     const e = Math.min(maxE, Math.max(1, c.e));
