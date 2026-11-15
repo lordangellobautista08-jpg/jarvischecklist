@@ -619,7 +619,7 @@ function sectionHtml(k,arr,done){
      <h2 class="${isPh||k.startsWith("MCU")?"mcu":""}" style="margin:0">${esc(displayTitle)}</h2>
      ${isForYou ? `<div class="sec-prog"><div class="track"><div class="fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--muted)">${watchedCount}/${totalCount}</span></div>` : ''}
    </div>
-   <span>${watchedCount} / ${totalCount} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span>
+   <span>${isForYou ? '' : `${watchedCount} / ${totalCount} watched`}<button class="pill ga" data-grp="${esc(k)}">Select all</button></span>
   </div>
    <div class="grid">${arr.map(m=>{const d=watched.has(m.id),rc=!d&&recoSet.has(m.id),op=!d&&optSet.has(m.id);return `<article class="card ${d?"done":""} ${rc?"reco":""} ${op?"opt":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`;}).join("")}</div></section>`;
 }
