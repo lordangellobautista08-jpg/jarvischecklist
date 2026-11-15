@@ -75,10 +75,6 @@ label{font-size:10px;letter-spacing:.1em;color:var(--muted)}
 .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:20px;align-items:start}.layout.open{grid-template-columns:250px minmax(0,1fr) 330px}
 .sec{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .sec h2{margin:0;font-size:15px;letter-spacing:.02em}.sec h2.mcu{color:var(--gold)}.sec span{color:var(--muted);font-size:11px}
-.sec-prog{display:inline-flex;align-items:center;gap:8px;margin-left:8px;vertical-align:middle}
-.sec-prog .track{width:64px;height:5px;border-radius:99px;background:#303038;overflow:hidden;display:inline-block;margin-top:0}
-.sec-prog .fill{height:100%;background:linear-gradient(90deg,var(--red),var(--red2));width:0}
-
 .cdiv{display:flex;align-items:center;gap:10px;margin:38px 0 -10px;color:var(--muted);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
 .cdiv:before,.cdiv:after{content:"";flex:1;height:1px;background:var(--line)}
 .cdone .sec h2:after{content:"  ✓ completed";font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--muted)}
@@ -468,6 +464,7 @@ async function play(id) {
   $("pl").hidden = false; 
   $("plv").textContent = "Loading…";
 
+  // Updated: Only show the episode picker if it's a series
   if (m.anilist_id && m.kind === "series") {
     const maxE = m.episodes || 24;
     const c = curEp(id);
@@ -608,19 +605,7 @@ function sectionHtml(k,arr,done){
   const activePath=activeSlug?paths.find(p=>p.slug===activeSlug):null;
   const recoSet=activePath?new Set(activePath.pathway_movies.filter(pm=>pm.viewing_type==="recommended").map(pm=>pm.movie_id)):new Set();
   const optSet=activePath?new Set(activePath.pathway_movies.filter(pm=>pm.viewing_type==="optional").map(pm=>pm.movie_id)):new Set();
-  
-  const watchedCount = arr.filter(m=>watched.has(m.id)).length;
-  const totalCount = arr.length;
-  const pct = totalCount ? Math.round(watchedCount / totalCount * 100) : 0;
-  const isForYou = (mode === "foryou");
-
-  return `<section data-sec="${esc(k)}" class="${done?"cdone":""}"><div class="sec">
-   <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;flex-wrap:wrap">
-     <h2 class="${isPh||k.startsWith("MCU")?"mcu":""}" style="margin:0">${esc(displayTitle)}</h2>
-     ${isForYou ? `<div class="sec-prog"><div class="track"><div class="fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--muted)">${watchedCount}/${totalCount}</span></div>` : ''}
-   </div>
-   <span>${watchedCount} / ${totalCount} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span>
-  </div>
+  return `<section data-sec="${esc(k)}" class="${done?"cdone":""}"><div class="sec"><h2 class="${isPh||k.startsWith("MCU")?"mcu":""}">${esc(displayTitle)}</h2><span>${arr.filter(m=>watched.has(m.id)).length} / ${arr.length} watched<button class="pill ga" data-grp="${esc(k)}">Select all</button></span></div>
    <div class="grid">${arr.map(m=>{const d=watched.has(m.id),rc=!d&&recoSet.has(m.id),op=!d&&optSet.has(m.id);return `<article class="card ${d?"done":""} ${rc?"reco":""} ${op?"opt":""} ${sel===m.id?"sel":""} ${picked.has(m.id)?"pick":""}" data-open="${m.id}" title="${esc(m.title)}"><span class="circ"></span>${thumb(m)}</article>`;}).join("")}</div></section>`;
 }
 function listHtml(G,m,so){
@@ -1020,7 +1005,6 @@ const handleSetPw = async()=>{
   const {error}=await sb.auth.updateUser({password});
   if(error){ alert("Could not update password: "+error.message); }else{ alert("Password updated successfully! You can now sign in using your email and password."); }
 };
-if($("setpw")) $("setpw.onclick") = handleSetPw; // Wait, handle binding correctly
 if($("setpw")) $("setpw").onclick = handleSetPw;
 if($("setpw-mob")) $("setpw-mob").onclick = handleSetPw;
 
