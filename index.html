@@ -151,6 +151,17 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
 .dnav button.on{border-color:var(--red)}
 .dclose{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:#15151a;color:#fff;font-size:24px;line-height:1;padding:0}
 
+/* Custom player panel */
+.cpanel{position:fixed;inset:0;z-index:65;display:flex;align-items:center;justify-content:center;padding:16px}
+.cbox{position:relative;width:min(92vw,420px);background:#17171d;border:1px solid #383840;border-radius:18px;padding:20px;box-shadow:0 20px 60px #000c;max-height:90dvh;overflow:auto}
+.chead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.chead b{font-size:15px}
+.cclose{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#15151a;color:#fff;font-size:20px;line-height:1;padding:0}
+.csrc{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.csrc .pill{cursor:pointer}
+.crow{display:flex;gap:10px}.crow>div{flex:1;min-width:0}
+.cmsg{min-height:18px;margin:2px 0 10px;color:var(--red3);font-size:12px}
+
 @media(prefers-reduced-motion:reduce){.ccard,.cph,.blur,.lockmsg,.dpanel{transition:none;animation:none}}
 @media(max-width:900px){
   .burger{display:grid}#left{display:none}.modes .m-chars{display:none}
@@ -169,7 +180,7 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
   .burger{width:34px;height:34px;font-size:17px;border-radius:8px;flex-shrink:0;}
   #who{gap:4px!important;flex-shrink:0;}
   #who .pill{padding:5px 8px;font-size:10px;white-space:nowrap;}
-  #setpw{display:none;}
+  #setpw,#cplay{display:none;}
 
   /* Responsive Player Bar & Title Wrapping on Mobile */
   .plbar{flex-wrap:wrap;gap:6px;padding:0 2px;align-items:center;}
@@ -202,6 +213,7 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
 <header>
   <div class="hl"><button class="burger" id="burger" aria-label="Open menu" hidden>☰</button><div class="brand">FRAME <b>/</b> MARVEL ARCHIVE</div></div>
   <div id="who" hidden style="display:flex;gap:8px">
+ <button class="pill" id="cplay">Custom Player</button>
  <button class="pill" id="setpw">Set / Change Password</button>
  <button class="pill" id="out">Sign out</button>
 </div>
@@ -284,6 +296,33 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
    <button class="secondary" id="bdone" style="border-radius:9px">Done selecting</button>
  </div>
 
+<div class="cpanel" id="cpanel" hidden>
+ <div class="dscrim" data-cpclose="1"></div>
+ <div class="cbox" role="dialog" aria-label="Custom player">
+  <div class="chead"><b>Custom Player</b><button class="cclose" data-cpclose="1" aria-label="Close">×</button></div>
+  <div class="csrc" id="cpsrc">
+    <button class="pill on" data-cpsrc="imdb">IMDb</button>
+    <button class="pill" data-cpsrc="tmdb">TMDB</button>
+    <button class="pill" data-cpsrc="anilist">AniList</button>
+  </div>
+  <label for="cpid" id="cpidl">IMDB ID</label>
+  <input class="field" id="cpid" autocomplete="off" placeholder="tt0848228">
+  <div id="cpkindw">
+    <label>TYPE</label>
+    <div class="csrc" id="cpkind" style="margin:6px 0 12px">
+      <button class="pill on" data-cpkind="movie">Movie</button>
+      <button class="pill" data-cpkind="series">Series</button>
+    </div>
+  </div>
+  <div class="crow" id="cpse" hidden>
+    <div id="cpsw"><label for="cps">SEASON</label><input class="field" id="cps" type="number" min="1" value="1" inputmode="numeric"></div>
+    <div><label for="cpe">EPISODE</label><input class="field" id="cpe" type="number" min="1" value="1" inputmode="numeric"></div>
+  </div>
+  <div class="cmsg" id="cpmsg"></div>
+  <button class="primary" id="cpgo">Play</button>
+ </div>
+</div>
+
  <div class="drawer" id="drawer" hidden>
  <div class="dscrim" data-dclose="1"></div>
  <nav class="dpanel">
@@ -298,6 +337,7 @@ button.chip{background:none;cursor:pointer;font:inherit;font-size:11px}button.ch
 
   <!-- Mobile Account Actions -->
   <div style="display:flex;flex-direction:column;gap:8px;margin:16px 0;padding-top:16px;border-top:1px solid var(--line);">
+    <button class="secondary" id="cplay-mob" style="border-radius:10px;text-align:left;padding:12px 14px;color:var(--text);font-size:14px;font-weight:650;">Custom Player</button>
     <button class="secondary" id="setpw-mob" style="border-radius:10px;text-align:left;padding:12px 14px;color:var(--text);font-size:14px;font-weight:650;">Set / Change Password</button>
     <button class="secondary" id="out-mob" style="border-radius:10px;text-align:left;padding:12px 14px;color:var(--red3);font-size:14px;font-weight:650;">Sign out</button>
   </div>
@@ -461,6 +501,7 @@ async function play(id) {
   sel = id; 
   
   $("plt").textContent = m.title; 
+  $("plx").textContent = "← Back to details";
   $("pl").hidden = false; 
   $("plv").textContent = "Loading…";
 
@@ -1009,6 +1050,83 @@ if($("setpw")) $("setpw").onclick = handleSetPw;
 if($("setpw-mob")) $("setpw-mob").onclick = handleSetPw;
 
 $("pw").addEventListener("keydown",e=>{ if(e.key==="Enter")$("go").click(); });
+
+/* ---------- custom player (play any title by ID) ---------- */
+const cp = { src: "imdb", kind: "movie" };
+const CP_HINT = { imdb: ["IMDB ID", "tt0848228"], tmdb: ["TMDB ID", "299534"], anilist: ["ANILIST ID", "16498"] };
+function cpSync() {
+  document.querySelectorAll("[data-cpsrc]").forEach(b => b.classList.toggle("on", b.dataset.cpsrc === cp.src));
+  document.querySelectorAll("[data-cpkind]").forEach(b => b.classList.toggle("on", b.dataset.cpkind === cp.kind));
+  $("cpidl").textContent = CP_HINT[cp.src][0];
+  $("cpid").placeholder = CP_HINT[cp.src][1];
+  const anime = cp.src === "anilist", tv = cp.kind === "series";
+  $("cpkindw").hidden = anime;
+  $("cpse").hidden = !(anime || tv);
+  $("cpsw").hidden = anime; // AniList entries are per-season, so episode only
+  $("cpmsg").textContent = "";
+}
+function cpOpen() {
+  $("drawer").hidden = true;
+  $("cpanel").hidden = false;
+  cpSync();
+  setTimeout(() => $("cpid").focus(), 50);
+}
+function cpClose() { $("cpanel").hidden = true; }
+async function cpSubmit() {
+  const msg = $("cpmsg"), go = $("cpgo"), raw = $("cpid").value.trim();
+  const tv = cp.kind === "series";
+  const s = Math.max(1, parseInt($("cps").value) || 1), e = Math.max(1, parseInt($("cpe").value) || 1);
+  let url = null, title = "";
+  msg.textContent = "";
+
+  if (cp.src === "anilist") {
+    const id = (raw.match(/\d+/) || [])[0];
+    if (!id) { msg.textContent = "Enter a valid AniList ID (numbers only)."; return; }
+    url = embedUrl(null, { anilist_id: id, kind: "series" }, 1, e);
+    title = `AniList #${id} · Episode ${e}`;
+  } else {
+    let imdb = null;
+    if (cp.src === "imdb") {
+      imdb = ((raw.match(/tt\d{7,10}/i) || [])[0] || "").toLowerCase();
+      if (!imdb) { msg.textContent = "Enter a valid IMDb ID, like tt0848228."; return; }
+    } else {
+      const tid = (raw.match(/\d+/) || [])[0];
+      if (!tid) { msg.textContent = "Enter a valid TMDB ID (numbers only)."; return; }
+      go.disabled = true; msg.textContent = "Looking up TMDB ID…";
+      try {
+        const { data, error } = await sb.functions.invoke("tmdb-details", { body: { tmdb_id: +tid, title: null, year: null, kind: tv ? "series" : "movie" } });
+        if (error) throw error;
+        imdb = data && data.imdb_id;
+      } catch (err) { console.error("Custom player TMDB lookup:", err); }
+      go.disabled = false;
+      if (!imdb) { msg.textContent = "Couldn’t find an IMDb ID for that TMDB ID. Check the ID and the Movie/Series type."; return; }
+    }
+    if (!(tv ? settings.player_template_tv : settings.player_template)) { msg.textContent = "The player isn’t set up yet. A source link still needs to be added."; return; }
+    url = embedUrl(imdb, { kind: tv ? "series" : "movie" }, s, e);
+    title = `${imdb}${tv ? ` · S${s} E${e}` : ""}`;
+  }
+  if (!url) { msg.textContent = "The player link isn’t set up correctly."; return; }
+
+  cpClose();
+  $("plt").textContent = title;
+  $("plc").innerHTML = "";
+  $("plx").textContent = "← Close";
+  $("pl").hidden = false;
+  const plv = $("plv"); plv.innerHTML = "";
+  const f = document.createElement("iframe");
+  f.src = url; f.allowFullscreen = true; f.referrerPolicy = "no-referrer";
+  f.setAttribute("allow", "fullscreen; encrypted-media");
+  plv.appendChild(f);
+}
+if ($("cplay")) $("cplay").onclick = cpOpen;
+if ($("cplay-mob")) $("cplay-mob").onclick = cpOpen;
+$("cpanel").addEventListener("click", ev => {
+  if (ev.target.closest("[data-cpclose]")) { cpClose(); return; }
+  const b = ev.target.closest("[data-cpsrc]"); if (b) { cp.src = b.dataset.cpsrc; cpSync(); return; }
+  const k = ev.target.closest("[data-cpkind]"); if (k) { cp.kind = k.dataset.cpkind; cpSync(); }
+});
+$("cpgo").onclick = cpSubmit;
+$("cpanel").addEventListener("keydown", ev => { if (ev.key === "Enter") cpSubmit(); if (ev.key === "Escape") cpClose(); });
 
 init();
 </script>
